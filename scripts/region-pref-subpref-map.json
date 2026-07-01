@@ -1,0 +1,89 @@
+{
+  "R1": {
+    "Lobaye": [
+      "Boda",
+      "Mbaïki"
+    ],
+    "Ombella M'Poko": [
+      "Bimbo",
+      "Boali",
+      "Bogangolo"
+    ]
+  },
+  "R2": {
+    "Mambéré-Kadéï": [
+      "Berbérati",
+      "Carnot",
+      "Gamboula"
+    ],
+    "Nana-Mambéré": [
+      "Baboua",
+      "Bouar"
+    ],
+    "Sangha-Mbaéré": [
+      "Nola"
+    ]
+  },
+  "R3": {
+    "Ouham": [
+      "Batangafo",
+      "Bossangoa",
+      "Bouca",
+      "Nangha Boguila"
+    ],
+    "Ouham Pendé": [
+      "Bocaranga",
+      "Bozoum",
+      "Ngaoundaye",
+      "Paoua"
+    ]
+  },
+  "R4": {
+    "Kémo": [
+      "Sibut"
+    ],
+    "Nana-Gribizi": [
+      "Kaga-Bandoro"
+    ],
+    "Ouaka": [
+      "Bambari",
+      "Grimari"
+    ]
+  },
+  "R5": {
+    "Bamingui-Bangoran": [
+      "Ndélé"
+    ],
+    "Haute-Kotto": [
+      "Bria"
+    ],
+    "Vakaga": [
+      "Birao"
+    ]
+  },
+  "R6": {
+    "Basse-Kotto": [
+      "Alindao",
+      "Kembé",
+      "Mobaye"
+    ],
+    "Haut-Mbomou": [
+      "Bambouti"
+    ],
+    "Mbomou": [
+      "Bangassou",
+      "Ouango"
+    ]
+  },
+  "R7": {
+    "Bangui 1": [
+      "Arrond 7"
+    ],
+    "Bangui 2": [
+      "Arrond 6"
+    ],
+    "Bangui 3": [
+      "Arrond 8"
+    ]
+  }
+}

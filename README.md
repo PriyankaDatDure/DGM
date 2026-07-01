@@ -48,25 +48,17 @@ to unit test, and the same logic the backend should eventually replicate server-
 
 ## Open items from the client spec — resolve before going live
 
-1. **Region → Prefecture mapping is missing.** The revised template adds "Affected
-   Prefectures" per region/hazard, but the workbook has no table mapping which of the
-   20 prefectures sit inside which of the 7 regions (R1–R7). Right now
-   `lib/constants.ts` (`REGION_PREFECTURE_MAP`) is `null`, and the picker in
-   `RegionHazardStep.tsx` falls back to showing all 20 prefectures for every region —
-   there's no guard against tagging a prefecture that isn't actually in that region.
-   **Get this mapping from DGM and populate `REGION_PREFECTURE_MAP`.**
-
-2. **"Yes/No" reference list is unused.** The Lists sheet defines an 8th table
+1. **"Yes/No" reference list is unused.** The Lists sheet defines an 8th table
    (Yes/No) that no field in the Data Dictionary references. Confirm with the client
    whether a field was dropped from this version of the spec before ignoring it.
 
-3. **No backend contract yet.** `FormWizard.submitBulletin()` currently just
+2. **No backend contract yet.** `FormWizard.submitBulletin()` currently just
    `console.log`s the payload. Suggested next step: a `POST /api/bulletins` endpoint
    accepting the `BulletinData` shape from `lib/types.ts`, which maps directly onto
    the `DB_Schema` sheet (weather_bulletin / national_forecast / region_forecast /
    regional_hazard_risk / meteorological_interpretation tables).
 
-4. **Re-implement validation server-side.** The blocking/warning rules in
+3. **Re-implement validation server-side.** The blocking/warning rules in
    `lib/validation.ts` must also run on the backend before writing to the database —
    a client can always be bypassed.
 

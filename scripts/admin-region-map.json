@@ -1,0 +1,71 @@
+[
+  {
+    "admin_region": "Plateaux",
+    "health_region": "RS1",
+    "prefectures": [
+      "Ombella -Mpoko",
+      "Lobaye"
+    ],
+    "code": "R1"
+  },
+  {
+    "admin_region": "Equateur",
+    "health_region": "RS2",
+    "prefectures": [
+      "Mambéré-Kadéï",
+      "Mamberé",
+      "Nana-Mamberé",
+      "Sangha-M’Baéré"
+    ],
+    "code": "R2"
+  },
+  {
+    "admin_region": "Yadé",
+    "health_region": "RS3",
+    "prefectures": [
+      "Ouham",
+      "Ouham-Fafa",
+      "Lim-Pendé",
+      "Ouham-Pendé"
+    ],
+    "code": "R3"
+  },
+  {
+    "admin_region": "Kagas",
+    "health_region": "RS4",
+    "prefectures": [
+      "Kémo",
+      "Ouaka",
+      "Nana-Gribizi"
+    ],
+    "code": "R4"
+  },
+  {
+    "admin_region": "Fertit",
+    "health_region": "RS5",
+    "prefectures": [
+      "Haute Kotto",
+      "Bamingui-Bangoran",
+      "Vakaga"
+    ],
+    "code": "R5"
+  },
+  {
+    "admin_region": "Haut Oubangui",
+    "health_region": "RS6",
+    "prefectures": [
+      "Haut M’Bomou",
+      "M’Bomou",
+      "Basse kotto"
+    ],
+    "code": "R6"
+  },
+  {
+    "admin_region": "Bas Oubangui",
+    "health_region": "RS7",
+    "prefectures": [
+      "Bangui"
+    ],
+    "code": "R7"
+  }
+]

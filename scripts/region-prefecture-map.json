@@ -1,0 +1,58 @@
+{
+  "map": {
+    "R1": [
+      "Lobaye",
+      "Ombella M'Poko"
+    ],
+    "R2": [
+      "MambΘrΘ-KadΘ∩",
+      "Nana-MambΘrΘ",
+      "Sangha-MbaΘrΘ"
+    ],
+    "R3": [
+      "Ouham",
+      "Ouham PendΘ"
+    ],
+    "R4": [
+      "KΘmo",
+      "Nana-Gribizi",
+      "Ouaka"
+    ],
+    "R5": [
+      "Bamingui-Bangoran",
+      "Haute-Kotto",
+      "Vakaga"
+    ],
+    "R6": [
+      "Basse-Kotto",
+      "Haut-Mbomou",
+      "Mbomou"
+    ],
+    "R7": [
+      "Bangui 1",
+      "Bangui 2",
+      "Bangui 3"
+    ]
+  },
+  "all": [
+    "Bamingui-Bangoran",
+    "Bangui 1",
+    "Bangui 2",
+    "Bangui 3",
+    "Basse-Kotto",
+    "Haut-Mbomou",
+    "Haute-Kotto",
+    "KΘmo",
+    "Lobaye",
+    "MambΘrΘ-KadΘ∩",
+    "Mbomou",
+    "Nana-Gribizi",
+    "Nana-MambΘrΘ",
+    "Ombella M'Poko",
+    "Ouaka",
+    "Ouham",
+    "Ouham PendΘ",
+    "Sangha-MbaΘrΘ",
+    "Vakaga"
+  ]
+}
