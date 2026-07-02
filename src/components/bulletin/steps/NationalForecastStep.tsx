@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { WeatherEntry } from "@/lib/bulletin/types";
 import WeatherFields from "@/components/bulletin/WeatherFields";
 
@@ -11,10 +12,12 @@ interface Props {
 }
 
 export default function NationalForecastStep({ data, onChange, fieldBlocking, fieldWarning }: Props) {
+  const t = useTranslations("form.nationalForecast");
+
   return (
     <div className="panel">
-      <h2>National weather forecast</h2>
-      <p className="desc">One set of values per daily bulletin, at country level.</p>
+      <h2>{t("title")}</h2>
+      <p className="desc">{t("desc")}</p>
       <WeatherFields
         data={data}
         onChange={onChange}

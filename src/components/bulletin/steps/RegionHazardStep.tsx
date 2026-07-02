@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Hazard, RegionCode, RegionHazardEntry } from "@/lib/bulletin/types";
 import {
   HAZARDS,
@@ -9,6 +10,7 @@ import {
   prefecturesForRegion,
   regionDisplayLabel,
 } from "@/lib/bulletin/constants";
+import { useEnumLabels } from "@/lib/i18n/use-enum-labels";
 import Field from "@/components/bulletin/Field";
 import PrefectureChipPicker from "@/components/bulletin/PrefectureChipPicker";
 
@@ -21,6 +23,10 @@ interface Props {
 
 export default function RegionHazardStep({ data, onChange, fieldBlocking, fieldWarning }: Props) {
   const [openRegion, setOpenRegion] = useState<RegionCode | null>("R1");
+  const t = useTranslations("form.regionHazard");
+  const tNat = useTranslations("form.nationalHazard");
+  const tCommon = useTranslations("common");
+  const { hazard: hazardLabel, riskLevel } = useEnumLabels();
 
   const togglePrefecture = (region: RegionCode, hazard: Hazard, prefecture: string) => {
     const entry = data[region][hazard];
@@ -33,11 +39,8 @@ export default function RegionHazardStep({ data, onChange, fieldBlocking, fieldW
 
   return (
     <div className="panel">
-      <h2>Climate hazard risk by region</h2>
-      <p className="desc">
-        Each region has three rows — one per hazard. If risk is anything other than "None," the
-        affected prefectures within that region must be specified.
-      </p>
+      <h2>{t("title")}</h2>
+      <p className="desc">{t("desc")}</p>
 
       {REGIONS.map((region) => (
         <details
@@ -61,35 +64,35 @@ export default function RegionHazardStep({ data, onChange, fieldBlocking, fieldW
                 onChange(region, h, { ...entry, [k]: value });
               return (
                 <div className="hazard-block" key={h}>
-                  <h4>{h}</h4>
+                  <h4>{hazardLabel(h)}</h4>
                   <div className="grid">
                     <Field
-                      label="Risk level"
+                      label={tNat("riskLevel")}
                       required
                       fieldKey={`${key}:risk_level`}
                       fieldBlocking={fieldBlocking}
                       fieldWarning={fieldWarning}
-                      errorMsg="Please select a valid risk level."
+                      errorMsg={tNat("riskLevelError")}
                     >
                       <select value={entry.risk_level} onChange={(e) => set("risk_level", e.target.value)}>
-                        <option value="">— Select —</option>
+                        <option value="">{tCommon("select")}</option>
                         {RISK_LEVELS.map((r) => (
-                          <option key={r}>{r}</option>
+                          <option key={r} value={r}>{riskLevel(r)}</option>
                         ))}
                       </select>
                     </Field>
                     <Field
-                      label="Comment"
+                      label={tNat("riskComment")}
                       fieldKey={`${key}:comment`}
                       fieldBlocking={fieldBlocking}
                       fieldWarning={fieldWarning}
-                      hint="Mandatory if risk level is High or Very High."
-                      errorMsg="Please add a comment explaining this risk level."
+                      hint={tNat("riskCommentHint")}
+                      errorMsg={tNat("riskCommentError")}
                     >
                       <input type="text" value={entry.comment} onChange={(e) => set("comment", e.target.value)} />
                     </Field>
                     <Field
-                      label="Possible recommendations"
+                      label={tNat("recommendations")}
                       optional
                       full
                       fieldKey={`${key}:recommendations`}
@@ -103,14 +106,14 @@ export default function RegionHazardStep({ data, onChange, fieldBlocking, fieldW
                       />
                     </Field>
                     <Field
-                      label="Affected prefectures"
+                      label={t("affectedPrefectures")}
                       full
                       fieldKey={`${key}:affected_prefectures`}
                       fieldBlocking={fieldBlocking}
                       fieldWarning={fieldWarning}
-                      hint="Required if risk level is not None. Only prefectures in this region are listed."
-                      errorMsg="Please indicate the affected prefectures within the region."
-                      warnMsg='Affected prefectures are empty. Please verify the risk level is "None".'
+                      hint={t("affectedPrefecturesHint")}
+                      errorMsg={t("affectedPrefecturesError")}
+                      warnMsg={t("affectedPrefecturesWarn")}
                     >
                       <PrefectureChipPicker
                         options={prefecturesForRegion(region)}

@@ -2,10 +2,13 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +30,7 @@ export default function LoginForm() {
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        setError(data.error ?? "Login failed.");
+        setError(data.error ?? t("loginFailed"));
         return;
       }
 
@@ -35,7 +38,7 @@ export default function LoginForm() {
       router.replace(from && from.startsWith("/") ? from : "/");
       router.refresh();
     } catch {
-      setError("Unable to sign in. Please try again.");
+      setError(t("loginError"));
     } finally {
       setLoading(false);
     }
@@ -43,7 +46,7 @@ export default function LoginForm() {
 
   return (
     <form className="login-form" onSubmit={handleSubmit}>
-      <Field label="Username or email" htmlFor="username">
+      <Field label={t("username")} htmlFor="username">
         <input
           id="username"
           name="username"
@@ -55,7 +58,7 @@ export default function LoginForm() {
         />
       </Field>
 
-      <Field label="Password" htmlFor="password">
+      <Field label={t("password")} htmlFor="password">
         <div className="password-field">
           <input
             id="password"
@@ -70,7 +73,7 @@ export default function LoginForm() {
             type="button"
             className="password-toggle"
             onClick={() => setShowPassword((visible) => !visible)}
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? tCommon("hidePassword") : tCommon("showPassword")}
             aria-pressed={showPassword}
           >
             {showPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -81,7 +84,7 @@ export default function LoginForm() {
       {error && <div className="login-error">{error}</div>}
 
       <button className="btn primary login-submit" type="submit" disabled={loading}>
-        {loading ? "Signing in…" : "Sign in"}
+        {loading ? t("signingIn") : t("signIn")}
       </button>
     </form>
   );

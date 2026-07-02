@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 
 interface FieldProps {
   label: string;
@@ -20,6 +21,7 @@ export default function Field({
   label, required, optional, hint, errorMsg, warnMsg, fieldKey,
   fieldBlocking, fieldWarning, full, children,
 }: FieldProps) {
+  const t = useTranslations("common");
   const hasErr = fieldBlocking.has(fieldKey);
   const hasWarn = !hasErr && fieldWarning.has(fieldKey);
   const cls = ["field", full ? "full" : "", hasErr ? "has-err" : "", hasWarn ? "has-warn" : ""]
@@ -30,8 +32,8 @@ export default function Field({
     <div className={cls}>
       <label>
         {label}
-        {required && <span className="req">*</span>}
-        {optional && <span className="opt"> (optional)</span>}
+        {required && <span className="req">{t("required")}</span>}
+        {optional && <span className="opt"> {t("optional")}</span>}
       </label>
       {children}
       {hint && <div className="hint">{hint}</div>}

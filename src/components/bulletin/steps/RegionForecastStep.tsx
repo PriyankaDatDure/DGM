@@ -1,7 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { RegionCode, WeatherEntry } from "@/lib/bulletin/types";
 import { REGIONS, WIND_DIRECTIONS, CONFIDENCE_LEVELS, regionDisplayLabel } from "@/lib/bulletin/constants";
+import { useEnumLabels } from "@/lib/i18n/use-enum-labels";
 
 interface Props {
   data: Record<RegionCode, WeatherEntry>;
@@ -9,22 +11,33 @@ interface Props {
 }
 
 export default function RegionForecastStep({ data, onChange }: Props) {
+  const t = useTranslations("form.regionForecast");
+  const tCommon = useTranslations("common");
+  const { windDirection, confidence } = useEnumLabels();
+
   const setField = (region: RegionCode, key: keyof WeatherEntry, value: string) => {
     onChange(region, { ...data[region], [key]: value });
   };
 
   return (
     <div className="panel">
-      <h2>Weather forecast by region</h2>
-      <p className="desc">
-        One row per administrative region. Health region codes are shown in brackets.
-      </p>
+      <h2>{t("title")}</h2>
+      <p className="desc">{t("desc")}</p>
       <div className="table-wrap forecast-table-wrap">
         <table className="forecast-table">
           <thead>
             <tr>
-              <th>Region</th><th>Min °C</th><th>Max °C</th><th>Feels-like °C</th><th>Humidity %</th>
-              <th>Pressure hPa</th><th>Wind dir.</th><th>Wind km/h</th><th>Rain mm</th><th>Sun %</th><th>Confidence</th>
+              <th>{t("region")}</th>
+              <th>{t("minTemp")}</th>
+              <th>{t("maxTemp")}</th>
+              <th>{t("feelsLike")}</th>
+              <th>{t("humidity")}</th>
+              <th>{t("pressure")}</th>
+              <th>{t("windDir")}</th>
+              <th>{t("windSpeed")}</th>
+              <th>{t("rainfall")}</th>
+              <th>{t("sunshine")}</th>
+              <th>{t("confidence")}</th>
             </tr>
           </thead>
           <tbody>
@@ -40,8 +53,10 @@ export default function RegionForecastStep({ data, onChange }: Props) {
                   <td><input type="number" value={row.pressure_hpa} onChange={(e) => setField(region, "pressure_hpa", e.target.value)} /></td>
                   <td>
                     <select value={row.wind_direction} onChange={(e) => setField(region, "wind_direction", e.target.value)}>
-                      <option value="">—</option>
-                      {WIND_DIRECTIONS.map((w) => <option key={w}>{w}</option>)}
+                      <option value="">{tCommon("select")}</option>
+                      {WIND_DIRECTIONS.map((w) => (
+                        <option key={w} value={w}>{windDirection(w)}</option>
+                      ))}
                     </select>
                   </td>
                   <td><input type="number" value={row.wind_speed_kmh} onChange={(e) => setField(region, "wind_speed_kmh", e.target.value)} /></td>
@@ -49,8 +64,10 @@ export default function RegionForecastStep({ data, onChange }: Props) {
                   <td><input type="number" value={row.sunshine_pct} onChange={(e) => setField(region, "sunshine_pct", e.target.value)} /></td>
                   <td>
                     <select value={row.confidence} onChange={(e) => setField(region, "confidence", e.target.value)}>
-                      <option value="">—</option>
-                      {CONFIDENCE_LEVELS.map((c) => <option key={c}>{c}</option>)}
+                      <option value="">{tCommon("select")}</option>
+                      {CONFIDENCE_LEVELS.map((c) => (
+                        <option key={c} value={c}>{confidence(c)}</option>
+                      ))}
                     </select>
                   </td>
                 </tr>
@@ -59,10 +76,7 @@ export default function RegionForecastStep({ data, onChange }: Props) {
           </tbody>
         </table>
       </div>
-      <div className="hint" style={{ marginTop: 10 }}>
-        Mandatory per region: Min °C, Max °C, Feels-like °C, Humidity, Wind direction, Wind speed, Rainfall.
-        Pressure and Sunshine are optional.
-      </div>
+      <div className="hint" style={{ marginTop: 10 }}>{t("mandatoryHint")}</div>
     </div>
   );
 }

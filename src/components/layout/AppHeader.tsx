@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import LocaleSwitcher from "@/components/layout/LocaleSwitcher";
 
 interface AppHeaderProps {
   username: string;
@@ -10,6 +12,8 @@ interface AppHeaderProps {
 
 export default function AppHeader({ username }: AppHeaderProps) {
   const router = useRouter();
+  const tBrand = useTranslations("brand");
+  const tNav = useTranslations("nav");
   const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
@@ -26,11 +30,12 @@ export default function AppHeader({ username }: AppHeaderProps) {
   return (
     <header className="top-header">
       <div className="header-brand">
-        <h1>DGM Daily Weather Forecast</h1>
-        <div className="sub">Climate &amp; Health Early Warning · Central African Republic</div>
+        <h1>{tBrand("appName")}</h1>
+        <div className="sub">{tBrand("subtitle")}</div>
       </div>
       <div className="header-actions">
-        <Link href="/" className="icon-btn header-home-btn" title="Home" aria-label="Home">
+        <LocaleSwitcher />
+        <Link href="/" className="icon-btn header-home-btn" title={tNav("home")} aria-label={tNav("home")}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"
@@ -40,14 +45,14 @@ export default function AppHeader({ username }: AppHeaderProps) {
             />
           </svg>
         </Link>
-        <div className="user-pill" title={`Signed in as ${username}`}>
+        <div className="user-pill" title={tNav("signedInAs", { username })}>
           <span className="user-avatar" aria-hidden="true">
             {username.charAt(0).toUpperCase()}
           </span>
           <span className="user-name">{username}</span>
         </div>
         <Link href="/dashboard" className="btn admin-link-btn">
-          Dashboard
+          {tNav("dashboard")}
         </Link>
         <button
           className="btn logout-btn"
@@ -55,7 +60,7 @@ export default function AppHeader({ username }: AppHeaderProps) {
           onClick={handleLogout}
           disabled={loading}
         >
-          {loading ? "Signing out…" : "Sign out"}
+          {loading ? tNav("signingOut") : tNav("signOut")}
         </button>
       </div>
     </header>

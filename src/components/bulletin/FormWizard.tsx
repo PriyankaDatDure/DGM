@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   BulletinData, ValidationResult,
   emptyMetadata, emptyWeatherEntry, emptyNationalHazardEntry,
@@ -20,10 +21,14 @@ import AppHeader from "@/components/layout/AppHeader";
 import { updateBulletinToDatabase } from "@/actions/bulletin-edit";
 import { submitBulletinToDatabase } from "@/actions/bulletin-submit";
 
-const STEP_LABELS = [
-  "Bulletin metadata", "National forecast", "Region forecast",
-  "National hazards", "Region hazards", "Interpretation",
-];
+const STEP_KEYS = [
+  "metadata",
+  "nationalForecast",
+  "regionForecast",
+  "nationalHazards",
+  "regionHazards",
+  "interpretation",
+] as const;
 
 function initBulletin(): BulletinData {
   const regionForecast = {} as BulletinData["regionForecast"];
@@ -62,6 +67,8 @@ export default function FormWizard({
   loadError,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("wizard");
+  const tCommon = useTranslations("common");
   const isEditing = Boolean(editBulletinId && initialBulletin);
   const [step, setStep] = useState(0);
   const [bulletin, setBulletin] = useState<BulletinData>(initialBulletin ?? initBulletin());
@@ -71,6 +78,8 @@ export default function FormWizard({
   );
   const [submitting, setSubmitting] = useState(false);
 
+  const stepLabels = STEP_KEYS.map((key) => t(`steps.${key}`));
+
   const fieldBlocking = result?.fieldBlocking ?? new Set<string>();
   const fieldWarning = result?.fieldWarning ?? new Set<string>();
 
@@ -79,10 +88,10 @@ export default function FormWizard({
     setResult(r);
     if (!options?.silent) {
       if (r.blocking.length === 0) {
-        setToast({ msg: "Validation passed." });
+        setToast({ msg: t("validationPassed") });
       } else {
         setToast({
-          msg: `${r.blocking.length} blocking issue(s) found — please fix highlighted fields.`,
+          msg: t("blockingFound", { count: r.blocking.length }),
           error: true,
         });
       }
@@ -106,7 +115,7 @@ export default function FormWizard({
     const r = runCheck({ silent: true });
     if (r.blocking.length > 0) {
       setToast({
-        msg: `${r.blocking.length} blocking issue(s) — fix highlighted fields before saving.`,
+        msg: t("blockingBeforeSave", { count: r.blocking.length }),
         error: true,
       });
       setTimeout(() => setToast(null), 3200);
@@ -115,14 +124,16 @@ export default function FormWizard({
 
     setSubmitting(true);
     try {
-      const result =
+      const saveResult =
         isEditing && editBulletinId
           ? await updateBulletinToDatabase(editBulletinId, bulletin)
           : await submitBulletinToDatabase(bulletin);
-      if (!result.success) {
-        setToast({ msg: result.error, error: true });
+      if (!saveResult.success) {
+        setToast({ msg: saveResult.error, error: true });
       } else {
-        setToast({ msg: result.message ?? (isEditing ? "Bulletin updated." : "Bulletin saved to database.") });
+        setToast({
+          msg: saveResult.message ?? (isEditing ? t("updated") : t("saved")),
+        });
       }
     } finally {
       setSubmitting(false);
@@ -209,9 +220,9 @@ export default function FormWizard({
       <AppHeader username={username} />
 
       <nav className="tabs">
-        {STEP_LABELS.map((label, i) => (
+        {stepLabels.map((label, i) => (
           <button
-            key={label}
+            key={STEP_KEYS[i]}
             className={i === step ? "active" : i < step ? "done" : ""}
             onClick={() => setStep(i)}
           >
@@ -223,22 +234,28 @@ export default function FormWizard({
       <main className="content">{stepContent}</main>
 
       <div className="footer-bar">
-        <div className="left">Step {step + 1} of {STEP_LABELS.length} — {STEP_LABELS[step]}</div>
+        <div className="left">
+          {t("footer", {
+            step: step + 1,
+            total: stepLabels.length,
+            label: stepLabels[step],
+          })}
+        </div>
         <div className="actions">
           {isEditing && (
             <button className="btn" type="button" onClick={cancelEdit}>
-              Cancel edit
+              {tCommon("cancelEdit")}
             </button>
           )}
           <button className="btn" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
-            ← Back
+            {tCommon("back")}
           </button>
-          {step === STEP_LABELS.length - 1 ? (
+          {step === stepLabels.length - 1 ? (
             <button className="btn primary" onClick={saveBulletin} disabled={submitting || (Boolean(editBulletinId) && !initialBulletin)}>
-              {submitting ? "Saving…" : isEditing ? "Update bulletin" : "Submit bulletin"}
+              {submitting ? tCommon("saving") : isEditing ? t("update") : t("submit")}
             </button>
           ) : (
-            <button className="btn primary" onClick={goNext}>Continue →</button>
+            <button className="btn primary" onClick={goNext}>{tCommon("continue")}</button>
           )}
         </div>
       </div>
