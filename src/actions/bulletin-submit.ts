@@ -5,6 +5,7 @@ import { withTransaction } from "@/lib/db";
 import { persistBulletin } from "@/lib/db/bulletin-persist";
 import { formatDbError } from "@/lib/db/errors";
 import { validateBulletin } from "@/lib/bulletin/validation";
+import { formatValidationSummary } from "@/lib/i18n/format-validation-server";
 import type { BulletinData } from "@/lib/bulletin/types";
 import type { ActionResult } from "@/types/actions";
 
@@ -15,7 +16,7 @@ export async function submitBulletinToDatabase(
   if (validation.blocking.length > 0) {
     return {
       success: false,
-      error: validation.blocking.slice(0, 3).join(" "),
+      error: await formatValidationSummary(validation.blocking),
     };
   }
 

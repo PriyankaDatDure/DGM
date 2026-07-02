@@ -93,9 +93,16 @@ export interface BulletinData {
   interpretation: Interpretation;
 }
 
+export type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
+
+export interface ValidationMessage {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
 export interface ValidationResult {
-  blocking: string[];
-  warnings: string[];
+  blocking: ValidationMessage[];
+  warnings: ValidationMessage[];
   // field-level keys so the UI can highlight specific inputs, e.g. "region:R3:temp_max_c"
   fieldBlocking: Set<string>;
   fieldWarning: Set<string>;

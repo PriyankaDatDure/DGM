@@ -6,6 +6,7 @@ import { loadBulletinById } from "@/lib/db/bulletin-load";
 import { updateBulletin } from "@/lib/db/bulletin-update";
 import { formatDbError } from "@/lib/db/errors";
 import { validateBulletin } from "@/lib/bulletin/validation";
+import { formatValidationSummary } from "@/lib/i18n/format-validation-server";
 import type { BulletinData } from "@/lib/bulletin/types";
 import type { ActionResult } from "@/types/actions";
 
@@ -50,7 +51,7 @@ export async function updateBulletinToDatabase(
   if (validation.blocking.length > 0) {
     return {
       success: false,
-      error: validation.blocking.slice(0, 3).join(" "),
+      error: await formatValidationSummary(validation.blocking),
     };
   }
 

@@ -13,12 +13,13 @@ function isPublicPath(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-  const authed = session ? (await verifySessionToken(session)) !== null : false;
 
   if (pathname.startsWith("/api/auth/login") || pathname.startsWith("/api/auth/logout")) {
     return NextResponse.next();
   }
+
+  const session = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const authed = session ? (await verifySessionToken(session)) !== null : false;
 
   if (isPublicPath(pathname)) {
     if (authed) {

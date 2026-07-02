@@ -22,7 +22,7 @@ export function getPool(): pg.Pool {
   if (!globalForPg.pgPool) {
     globalForPg.pgPool = new pg.Pool({
       host: requireEnv("DATABASE_HOST"),
-      port: Number(process.env.DATABASE_PORT ?? 5432),
+      port: Number(process.env.DATABASE_PORT ?? 5433),
       database: requireEnv("DATABASE_NAME"),
       user: requireEnv("DATABASE_USER"),
       password: requireEnv("DATABASE_PASSWORD"),

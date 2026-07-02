@@ -35,7 +35,11 @@ export default function MetadataStep({ data, onChange, fieldBlocking, fieldWarni
         </Field>
 
         <Field label={t("validityPeriod")} required full fieldKey="meta:validity_period" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
-          errorMsg={t("validityPeriodError")}>
+          errorMsg={
+            fieldBlocking.has("meta:validity_period") && data.validity_period.trim()
+              ? t("validityPeriodInconsistent")
+              : t("validityPeriodError")
+          }>
           <input
             type="text"
             placeholder={t("validityPeriodPlaceholder")}
@@ -44,7 +48,8 @@ export default function MetadataStep({ data, onChange, fieldBlocking, fieldWarni
           />
         </Field>
 
-        <Field label={t("dataSources")} required full fieldKey="meta:data_sources" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}>
+        <Field label={t("dataSources")} required full fieldKey="meta:data_sources" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+          errorMsg={t("dataSourcesError")}>
           <textarea
             placeholder={t("dataSourcesPlaceholder")}
             value={data.data_sources}
@@ -52,7 +57,8 @@ export default function MetadataStep({ data, onChange, fieldBlocking, fieldWarni
           />
         </Field>
 
-        <Field label={t("nationalForecastText")} required full fieldKey="meta:national_forecast_text" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}>
+        <Field label={t("nationalForecastText")} required full fieldKey="meta:national_forecast_text" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+          errorMsg={t("nationalForecastTextError")}>
           <textarea
             placeholder={t("nationalForecastTextPlaceholder")}
             value={data.national_forecast_text}

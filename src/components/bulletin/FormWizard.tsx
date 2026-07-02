@@ -4,13 +4,18 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  BulletinData, ValidationResult,
+  BulletinData, ValidationResult, WizardStep,
   emptyMetadata, emptyWeatherEntry, emptyNationalHazardEntry,
   emptyRegionHazardEntry, emptyInterpretation,
   Hazard, RegionCode,
 } from "@/lib/bulletin/types";
 import { HAZARDS, REGIONS } from "@/lib/bulletin/constants";
-import { validateBulletin } from "@/lib/bulletin/validation";
+import {
+  findFirstStepWithBlocking,
+  validateBulletin,
+  validateBulletinStep,
+  WIZARD_STEP_COUNT,
+} from "@/lib/bulletin/validation";
 import MetadataStep from "@/components/bulletin/steps/MetadataStep";
 import NationalForecastStep from "@/components/bulletin/steps/NationalForecastStep";
 import RegionForecastStep from "@/components/bulletin/steps/RegionForecastStep";
@@ -83,24 +88,32 @@ export default function FormWizard({
   const fieldBlocking = result?.fieldBlocking ?? new Set<string>();
   const fieldWarning = result?.fieldWarning ?? new Set<string>();
 
-  const runCheck = (options?: { silent?: boolean }) => {
-    const r = validateBulletin(bulletin);
-    setResult(r);
-    if (!options?.silent) {
-      if (r.blocking.length === 0) {
-        setToast({ msg: t("validationPassed") });
-      } else {
-        setToast({
-          msg: t("blockingFound", { count: r.blocking.length }),
-          error: true,
-        });
-      }
-      setTimeout(() => setToast(null), 2800);
-    }
-    return r;
+  const showStepBlockingToast = (count: number) => {
+    setToast({
+      msg: t("stepBlockingFound", { count }),
+      error: true,
+    });
+    setTimeout(() => setToast(null), 3200);
   };
 
-  const goNext = () => setStep((s) => s + 1);
+  const tryContinue = () => {
+    const stepResult = validateBulletinStep(bulletin, step as WizardStep);
+    setResult(stepResult);
+    if (stepResult.blocking.length > 0) {
+      showStepBlockingToast(stepResult.blocking.length);
+      return;
+    }
+    setResult(null);
+    setStep((s) => Math.min(s + 1, WIZARD_STEP_COUNT - 1));
+  };
+
+  const goToStep = (target: number) => {
+    if (target === step) return;
+    if (target < step) {
+      setResult(null);
+      setStep(target);
+    }
+  };
 
   const cancelEdit = () => {
     setStep(0);
@@ -112,10 +125,13 @@ export default function FormWizard({
   };
 
   const saveBulletin = async () => {
-    const r = runCheck({ silent: true });
-    if (r.blocking.length > 0) {
+    const fullResult = validateBulletin(bulletin);
+    setResult(fullResult);
+    if (fullResult.blocking.length > 0) {
+      const errorStep = findFirstStepWithBlocking(bulletin);
+      setStep(errorStep);
       setToast({
-        msg: t("blockingBeforeSave", { count: r.blocking.length }),
+        msg: t("blockingBeforeSave", { count: fullResult.blocking.length }),
         error: true,
       });
       setTimeout(() => setToast(null), 3200);
@@ -168,6 +184,8 @@ export default function FormWizard({
             onChange={(region: RegionCode, entry) =>
               setBulletin((b) => ({ ...b, regionForecast: { ...b.regionForecast, [region]: entry } }))
             }
+            fieldBlocking={fieldBlocking}
+            fieldWarning={fieldWarning}
           />
         );
       case 3:
@@ -223,8 +241,13 @@ export default function FormWizard({
         {stepLabels.map((label, i) => (
           <button
             key={STEP_KEYS[i]}
-            className={i === step ? "active" : i < step ? "done" : ""}
-            onClick={() => setStep(i)}
+            type="button"
+            className={[
+              i === step ? "active" : i < step ? "done" : "locked",
+            ].join(" ")}
+            onClick={() => goToStep(i)}
+            disabled={i > step}
+            aria-disabled={i > step}
           >
             <span className="n">{i + 1}</span>{label}
           </button>
@@ -247,15 +270,15 @@ export default function FormWizard({
               {tCommon("cancelEdit")}
             </button>
           )}
-          <button className="btn" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+          <button className="btn" type="button" onClick={() => goToStep(step - 1)} disabled={step === 0}>
             {tCommon("back")}
           </button>
           {step === stepLabels.length - 1 ? (
-            <button className="btn primary" onClick={saveBulletin} disabled={submitting || (Boolean(editBulletinId) && !initialBulletin)}>
+            <button className="btn primary" type="button" onClick={saveBulletin} disabled={submitting || (Boolean(editBulletinId) && !initialBulletin)}>
               {submitting ? tCommon("saving") : isEditing ? t("update") : t("submit")}
             </button>
           ) : (
-            <button className="btn primary" onClick={goNext}>{tCommon("continue")}</button>
+            <button className="btn primary" type="button" onClick={tryContinue}>{tCommon("continue")}</button>
           )}
         </div>
       </div>

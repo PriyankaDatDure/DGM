@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,19 +10,27 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
-export const metadata: Metadata = {
-  title: "DGM Daily Weather Forecast — Transmission Form",
-  description: "Climate & Health Early Warning System — Central African Republic",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("brand");
+  return {
+    title: t("metaTitle"),
+    description: t("metaDescription"),
+    icons: {
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+    },
+  };
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+    <html lang={locale} className={inter.variable}>
+      <body>
+        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+      </body>
     </html>
   );
 }

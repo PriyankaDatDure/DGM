@@ -27,7 +27,7 @@ const tables = [
 
 const pool = new pg.Pool({
   host: process.env.DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT || 5432),
+  port: Number(process.env.DATABASE_PORT || 5433),
   database: process.env.DATABASE_NAME,
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,

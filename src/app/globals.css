@@ -277,6 +277,16 @@ body {
   color: #fff;
 }
 
+.tabs button.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tabs button.locked:hover {
+  background: transparent;
+  color: inherit;
+}
+
 /* ─── Layout & panels ─────────────────────────────────────────── */
 main.content {
   max-width: 1040px;
@@ -512,6 +522,17 @@ td select {
   font-size: 14px;
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
+}
+
+.forecast-table td.cell-err input,
+.forecast-table td.cell-err select {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.forecast-table td.cell-warn input,
+.forecast-table td.cell-warn select {
+  border-color: var(--warning);
 }
 
 .forecast-table td input[type="number"] {
@@ -1036,6 +1057,45 @@ button.btn.logout-btn:hover {
 .login-loading {
   font-size: 14px;
   color: var(--ink-muted);
+}
+
+.locale-switcher {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.locale-switcher button {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.locale-switcher button + button {
+  border-left: 1px solid var(--line);
+}
+
+.locale-switcher button.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.locale-switcher button:hover:not(.active) {
+  background: var(--bg-subtle);
+  color: var(--ink);
+}
+
+.login-card .locale-switcher-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 /* ─── Admin & dashboard ─────────────────────────────────────────── */

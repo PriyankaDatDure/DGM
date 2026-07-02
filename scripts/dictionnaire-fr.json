@@ -1,0 +1,195 @@
+{
+  "sheet": "Dictionnaire",
+  "headers": [
+    "Dictionnaire de données",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "rows": [
+    [
+      "Référence fonctionnelle et technique pour l’implémentation du formulaire en ligne.",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Onglet",
+      "Libellé du champ",
+      "Code technique",
+      "Type",
+      "Obligatoire",
+      "Valeurs attendues",
+      "Règle de validation",
+      "Notes"
+    ],
+    [
+      "Infos_generales",
+      "Date de prévision",
+      "date_prevision",
+      "Date",
+      "Oui",
+      "JJ/MM/AAAA",
+      "Obligatoire ; avertissement si la date est ancienne",
+      "Une valeur par bulletin"
+    ],
+    [
+      "Infos_generales",
+      "Heure de publication",
+      "heure_publication",
+      "Heure",
+      "Oui",
+      "HH:MM",
+      "Obligatoire",
+      "Heure locale"
+    ],
+    [
+      "Prevision_nationale",
+      "Température minimale",
+      "temp_min_c",
+      "Nombre",
+      "Oui",
+      "10–50°C attendus",
+      "Numérique ; avertissement si hors plage attendue",
+      "Température normale affichée au thermomètre"
+    ],
+    [
+      "Prevision_nationale",
+      "Température maximale",
+      "temp_max_c",
+      "Nombre",
+      "Oui",
+      "10–50°C attendus",
+      "Numérique ; doit être supérieure ou égale à temp_min_c",
+      "Température normale affichée au thermomètre"
+    ],
+    [
+      "Prevision_nationale",
+      "Température ressentie",
+      "temp_ressentie_c",
+      "Nombre",
+      "Oui",
+      "15–60°C attendus",
+      "Numérique ; avertissement si hors plage attendue",
+      "Pas de minimum ou maximum demandé"
+    ],
+    [
+      "Prevision_nationale / Prevision_regions",
+      "Humidité relative",
+      "humidite_relative_pct",
+      "Nombre",
+      "Oui",
+      "0–100%",
+      "Alerte bloquante si hors 0–100%",
+      ""
+    ],
+    [
+      "Prevision_nationale / Prevision_regions",
+      "Pression atmosphérique",
+      "pression_hpa",
+      "Nombre",
+      "Non",
+      "850–1100 hPa attendus",
+      "Avertissement si hors plage attendue",
+      ""
+    ],
+    [
+      "Prevision_nationale / Prevision_regions",
+      "Direction du vent",
+      "direction_vent",
+      "Liste",
+      "Oui",
+      "Nord, Nord-Est, Est, Sud-Est, Sud, Sud-Ouest, Ouest, Nord-Ouest",
+      "Doit correspondre à la liste autorisée",
+      "Écrite en toutes lettres, sans abréviation"
+    ],
+    [
+      "Prevision_nationale / Prevision_regions",
+      "Vitesse du vent",
+      "vitesse_vent_kmh",
+      "Nombre",
+      "Oui",
+      ">= 0",
+      "Avertissement si supérieur à 80 km/h",
+      ""
+    ],
+    [
+      "Prevision_nationale / Prevision_regions",
+      "Précipitations",
+      "precipitations_mm",
+      "Nombre",
+      "Oui",
+      ">= 0",
+      "Avertissement si supérieur à 100 mm",
+      ""
+    ],
+    [
+      "Prevision_nationale / Prevision_regions",
+      "Ensoleillement",
+      "ensoleillement_pct",
+      "Nombre",
+      "Non",
+      "0–100%",
+      "Alerte bloquante si hors 0–100%",
+      ""
+    ],
+    [
+      "Prevision_regions",
+      "Région",
+      "code_region",
+      "Liste",
+      "Oui",
+      "R1, R2, R3, R4, R5, R6, R7",
+      "Doit correspondre à la liste autorisée des régions",
+      "Remplace la saisie au niveau des prévisions par localité"
+    ],
+    [
+      "Risques_nationaux / Risques_regions",
+      "Type d’aléa",
+      "type_alea",
+      "Liste",
+      "Oui",
+      "Vague de chaleur, Inondation, Vent fort",
+      "Doit correspondre à la liste autorisée",
+      ""
+    ],
+    [
+      "Risques_nationaux / Risques_regions",
+      "Niveau de risque",
+      "niveau_risque",
+      "Liste",
+      "Oui",
+      "Aucun, Faible, Modéré, Élevé, Très élevé",
+      "Commentaire obligatoire pour Élevé / Très élevé",
+      ""
+    ],
+    [
+      "Risques_regions",
+      "Préfectures concernées",
+      "prefectures_concernees",
+      "Multisélection / texte",
+      "Conditionnel",
+      "Une ou plusieurs préfectures",
+      "Obligatoire si le niveau de risque n’est pas Aucun",
+      "Utilisé uniquement pour préciser les préfectures touchées dans une région"
+    ],
+    [
+      "Interpretation_meteo",
+      "Texte d’interprétation nationale",
+      "texte_interpretation",
+      "Texte long",
+      "Oui",
+      "Texte libre",
+      "Obligatoire ; avertissement si trop court",
+      ""
+    ]
+  ]
+}
