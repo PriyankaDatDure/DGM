@@ -69,10 +69,16 @@
       "publicationTime": "Heure de publication",
       "publicationTimeHint": "Heure locale de publication ou de transmission.",
       "publicationTimeError": "Veuillez saisir l'heure de publication du bulletin.",
-      "validityPeriod": "Période de validité",
-      "validityPeriodError": "Veuillez saisir la période de validité de la prévision.",
+      "validityDate": "Date de validité",
+      "validityDateHint": "Date couverte par la période de validité.",
+      "validityDateError": "Veuillez saisir la date de validité.",
+      "validityStartTime": "Heure de début de validité",
+      "validityStartTimeHint": "Heure locale de début de la période de validité.",
+      "validityStartTimeError": "Veuillez saisir l'heure de début de validité.",
+      "validityEndTime": "Heure de fin de validité",
+      "validityEndTimeHint": "Heure locale de fin de la période de validité.",
+      "validityEndTimeError": "Veuillez saisir l'heure de fin de validité.",
       "validityPeriodInconsistent": "La période de validité est incohérente. L'heure de fin doit être postérieure à l'heure de début.",
-      "validityPeriodPlaceholder": "p. ex. Du 17/06/2026 à 09h00 locales à 23h59 locales",
       "dataSources": "Sources de données",
       "dataSourcesPlaceholder": "p. ex. Observations de surface ; Eumetsat ; NOAA ; Windy ; Ogimet",
       "dataSourcesError": "Veuillez saisir les sources de données.",
@@ -106,7 +112,7 @@
     },
     "nationalHazard": {
       "title": "Analyse nationale des risques climatiques",
-      "desc": "Saisir uniquement les trois aléas climatiques suivis : vague de chaleur, inondation et vent fort. Un commentaire est obligatoire pour les niveaux Élevé ou Très élevé.",
+      "desc": "Saisir les quatre aléas climatiques suivis : vague de chaleur, inondation, vent fort et poussière. Un commentaire est obligatoire pour les niveaux Élevé ou Très élevé.",
       "riskLevel": "Niveau de risque",
       "riskLevelError": "Veuillez sélectionner un niveau de risque valide.",
       "areasConcerned": "Zones concernées",
@@ -117,7 +123,7 @@
     },
     "regionHazard": {
       "title": "Analyse des risques climatiques par région",
-      "desc": "Chaque région comporte trois lignes — une par aléa. Si le risque n'est pas « Aucun », les préfectures concernées dans la région doivent être renseignées.",
+      "desc": "Chaque région comporte quatre lignes — une par aléa. Si le risque n'est pas « Aucun », les préfectures concernées dans la région doivent être renseignées.",
       "affectedPrefectures": "Préfectures concernées",
       "affectedPrefecturesHint": "Obligatoire si le niveau de risque n'est pas Aucun. Seules les préfectures de cette région sont listées.",
       "affectedPrefecturesError": "Veuillez indiquer les préfectures concernées dans la région.",
@@ -170,7 +176,8 @@
     "hazard": {
       "heatWave": "Vague de chaleur",
       "flood": "Inondation",
-      "strongWind": "Vent fort"
+      "strongWind": "Vent fort",
+      "dust": "Poussière"
     },
     "riskLevel": {
       "none": "Aucun",

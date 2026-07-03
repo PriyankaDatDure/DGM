@@ -69,10 +69,16 @@
       "publicationTime": "Publication time",
       "publicationTimeHint": "Local publication / transmission time.",
       "publicationTimeError": "Please enter the bulletin publication time.",
-      "validityPeriod": "Validity period",
-      "validityPeriodError": "Please enter the forecast validity period.",
+      "validityDate": "Validity date",
+      "validityDateHint": "Date covered by the forecast validity window.",
+      "validityDateError": "Please enter the validity date.",
+      "validityStartTime": "Validity start time",
+      "validityStartTimeHint": "Local start time of the validity period.",
+      "validityStartTimeError": "Please enter the validity start time.",
+      "validityEndTime": "Validity end time",
+      "validityEndTimeHint": "Local end time of the validity period.",
+      "validityEndTimeError": "Please enter the validity end time.",
       "validityPeriodInconsistent": "The validity period is inconsistent. The end time must be later than the start time.",
-      "validityPeriodPlaceholder": "e.g. From 2026-07-01 09:00 local time to 23:59 local time",
       "dataSources": "Data sources",
       "dataSourcesPlaceholder": "e.g. Surface observations; Eumetsat; NOAA; Windy; Ogimet",
       "dataSourcesError": "Please enter the data sources.",
@@ -106,7 +112,7 @@
     },
     "nationalHazard": {
       "title": "National climate hazard risk analysis",
-      "desc": "Only three hazard types are monitored: Heat wave, Flood, Strong wind. A comment is mandatory if risk level is High or Very High.",
+      "desc": "Four hazard types are monitored: Heat wave, Flood, Strong wind, and Dust. A comment is mandatory if risk level is High or Very High.",
       "riskLevel": "Risk level",
       "riskLevelError": "Please select a valid risk level.",
       "areasConcerned": "Areas concerned",
@@ -117,7 +123,7 @@
     },
     "regionHazard": {
       "title": "Climate hazard risk by region",
-      "desc": "Each region has three rows — one per hazard. If risk is anything other than \"None,\" the affected prefectures within that region must be specified.",
+      "desc": "Each region has four rows — one per hazard. If risk is anything other than \"None,\" the affected prefectures within that region must be specified.",
       "affectedPrefectures": "Affected prefectures",
       "affectedPrefecturesHint": "Required if risk level is not None. Only prefectures in this region are listed.",
       "affectedPrefecturesError": "Please indicate the affected prefectures within the region.",
@@ -170,7 +176,8 @@
     "hazard": {
       "heatWave": "Heat wave",
       "flood": "Flood",
-      "strongWind": "Strong wind"
+      "strongWind": "Strong wind",
+      "dust": "Dust"
     },
     "riskLevel": {
       "none": "None",
