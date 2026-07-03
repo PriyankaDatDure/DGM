@@ -34,18 +34,27 @@ export default function MetadataStep({ data, onChange, fieldBlocking, fieldWarni
           <input type="time" value={data.publication_time} onChange={(e) => set("publication_time", e.target.value)} />
         </Field>
 
-        <Field label={t("validityPeriod")} required full fieldKey="meta:validity_period" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+        <Field label={t("validityDate")} required fieldKey="meta:validity_date" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+          hint={t("validityDateHint")} errorMsg={t("validityDateError")}>
+          <input type="date" value={data.validity_date} onChange={(e) => set("validity_date", e.target.value)} />
+        </Field>
+
+        <Field label={t("validityStartTime")} required fieldKey="meta:validity_start_time" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+          hint={t("validityStartTimeHint")} errorMsg={t("validityStartTimeError")}>
+          <input type="time" value={data.validity_start_time} onChange={(e) => set("validity_start_time", e.target.value)} />
+        </Field>
+
+        <Field label={t("validityEndTime")} required fieldKey="meta:validity_end_time" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+          hint={t("validityEndTimeHint")}
           errorMsg={
-            fieldBlocking.has("meta:validity_period") && data.validity_period.trim()
+            fieldBlocking.has("meta:validity_end_time") &&
+            data.validity_date.trim() &&
+            data.validity_start_time.trim() &&
+            data.validity_end_time.trim()
               ? t("validityPeriodInconsistent")
-              : t("validityPeriodError")
+              : t("validityEndTimeError")
           }>
-          <input
-            type="text"
-            placeholder={t("validityPeriodPlaceholder")}
-            value={data.validity_period}
-            onChange={(e) => set("validity_period", e.target.value)}
-          />
+          <input type="time" value={data.validity_end_time} onChange={(e) => set("validity_end_time", e.target.value)} />
         </Field>
 
         <Field label={t("dataSources")} required full fieldKey="meta:data_sources" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}

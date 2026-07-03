@@ -21,7 +21,7 @@ export {
   regionDisplayLabel,
 };
 
-export const HAZARDS: Hazard[] = ["Heat wave", "Flood", "Strong wind"];
+export const HAZARDS: Hazard[] = ["Heat wave", "Flood", "Strong wind", "Dust"];
 export const RISK_LEVELS: RiskLevel[] = ["None", "Low", "Moderate", "High", "Very High"];
 export const WIND_DIRECTIONS: WindDirection[] = [
   "North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West",

@@ -17,6 +17,7 @@ import {
   emptyWeatherEntry,
 } from "@/lib/bulletin/types";
 import { formatDateValue, formatTimeValue } from "@/lib/format/dates";
+import { parseValidityPeriod } from "@/lib/bulletin/validity-period";
 import { rowToWeatherFieldInput } from "@/lib/validation/weather-fields";
 
 function dbRowToWeatherEntry(row: Parameters<typeof rowToWeatherFieldInput>[0]) {
@@ -38,11 +39,12 @@ export async function loadBulletinById(bulletinId: string): Promise<BulletinData
   if (bulletinResult.rows.length === 0) return null;
 
   const bulletin = bulletinResult.rows[0];
+  const validity = parseValidityPeriod(bulletin.validity_period ?? "");
   const metadata = {
     ...emptyMetadata(),
     forecast_date: formatDateValue(bulletin.forecast_date),
     publication_time: formatTimeValue(bulletin.publication_time),
-    validity_period: bulletin.validity_period ?? "",
+    ...validity,
     data_sources: bulletin.data_sources ?? "",
     national_forecast_text: bulletin.national_forecast_text ?? "",
     general_comment: bulletin.general_comment ?? "",

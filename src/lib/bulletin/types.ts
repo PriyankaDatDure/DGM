@@ -2,7 +2,7 @@
 // Conceptual_template_DGM_daily_weather_forecast_form_CAR_EN_regions_1.xlsx
 
 export type RiskLevel = "None" | "Low" | "Moderate" | "High" | "Very High";
-export type Hazard = "Heat wave" | "Flood" | "Strong wind";
+export type Hazard = "Heat wave" | "Flood" | "Strong wind" | "Dust";
 export type WindDirection =
   | "North" | "North-East" | "East" | "South-East"
   | "South" | "South-West" | "West" | "North-West";
@@ -57,7 +57,9 @@ export const emptyRegionHazardEntry = (): RegionHazardEntry => ({
 export interface BulletinMetadata {
   forecast_date: string;
   publication_time: string;
-  validity_period: string;
+  validity_date: string;
+  validity_start_time: string;
+  validity_end_time: string;
   data_sources: string;
   national_forecast_text: string;
   general_comment: string;
@@ -66,7 +68,9 @@ export interface BulletinMetadata {
 }
 
 export const emptyMetadata = (): BulletinMetadata => ({
-  forecast_date: "", publication_time: "", validity_period: "", data_sources: "",
+  forecast_date: "", publication_time: "",
+  validity_date: "", validity_start_time: "", validity_end_time: "",
+  data_sources: "",
   national_forecast_text: "", general_comment: "", submission_status: "", forecaster_name: "",
 });
 

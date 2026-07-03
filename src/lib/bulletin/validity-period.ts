@@ -1,8 +1,32 @@
 /**
- * Best-effort parser for free-text validity periods, e.g.
- * "From 2026-07-01 09:00 local time to 23:59 local time"
- * "Du 17/06/2026 à 09h00 locales à 23h59 locales"
+ * Validity period helpers — structured date/start/end in the form,
+ * canonical text in the DB (`YYYY-MM-DD HH:MM to HH:MM`).
+ * Legacy free-text values are parsed on load when possible.
  */
+
+export interface ValidityPeriodFields {
+  validity_date: string;
+  validity_start_time: string;
+  validity_end_time: string;
+}
+
+function padTime(value: string): string {
+  const [h, m] = value.split(":");
+  return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
+}
+
+function formatDateISO(date: Date): string {
+  const y = date.getFullYear();
+  const mo = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${mo}-${d}`;
+}
+
+function formatTimeISO(date: Date): string {
+  const h = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  return `${h}:${mi}`;
+}
 
 function parseIsoDateTime(text: string): Date | null {
   const match = text.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})/);
@@ -102,10 +126,75 @@ function parseSegmentDateTime(segment: string, reference?: Date): Date | null {
   return null;
 }
 
+const emptyFields = (): ValidityPeriodFields => ({
+  validity_date: "",
+  validity_start_time: "",
+  validity_end_time: "",
+});
+
+/** Serialize structured fields for DB storage. */
+export function formatValidityPeriod(fields: ValidityPeriodFields): string {
+  const date = fields.validity_date.trim();
+  const start = fields.validity_start_time.trim();
+  const end = fields.validity_end_time.trim();
+  if (!date || !start || !end) return "";
+  return `${date} ${padTime(start)} to ${padTime(end)}`;
+}
+
+/** Parse stored text into structured fields (canonical or legacy free-text). */
+export function parseValidityPeriod(text: string): ValidityPeriodFields {
+  const trimmed = text.trim();
+  if (!trimmed) return emptyFields();
+
+  const canonical = trimmed.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})\s+to\s+(\d{1,2}:\d{2})$/i);
+  if (canonical) {
+    return {
+      validity_date: canonical[1],
+      validity_start_time: padTime(canonical[2]),
+      validity_end_time: padTime(canonical[3]),
+    };
+  }
+
+  const times = extractOrderedDateTimes(trimmed);
+  if (times.length >= 2) {
+    const start = times[0];
+    const end = times[times.length - 1];
+    return {
+      validity_date: formatDateISO(start),
+      validity_start_time: formatTimeISO(start),
+      validity_end_time: formatTimeISO(end),
+    };
+  }
+
+  return emptyFields();
+}
+
+/** Returns true when end time is not later than start on the same date. */
+export function isStructuredValidityEndBeforeStart(
+  date: string,
+  startTime: string,
+  endTime: string
+): boolean {
+  if (!date.trim() || !startTime.trim() || !endTime.trim()) return false;
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  if ([sh, sm, eh, em].some((n) => Number.isNaN(n))) return false;
+  return eh * 60 + em <= sh * 60 + sm;
+}
+
 /** Returns true when end time is not later than start (parseable text only). */
 export function isValidityPeriodEndBeforeStart(text: string): boolean {
   const trimmed = text.trim();
   if (!trimmed) return false;
+
+  const fields = parseValidityPeriod(trimmed);
+  if (fields.validity_date && fields.validity_start_time && fields.validity_end_time) {
+    return isStructuredValidityEndBeforeStart(
+      fields.validity_date,
+      fields.validity_start_time,
+      fields.validity_end_time
+    );
+  }
 
   const times = extractOrderedDateTimes(trimmed);
   if (times.length < 2) return false;

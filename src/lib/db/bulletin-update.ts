@@ -1,6 +1,7 @@
 import type pg from "pg";
 import { HAZARDS, REGIONS } from "@/lib/bulletin/constants";
 import type { BulletinData } from "@/lib/bulletin/types";
+import { formatValidityPeriod } from "@/lib/bulletin/validity-period";
 import { isNonEmpty } from "@/lib/validation/entities";
 import { weatherInsertParams, weatherUpdateAssignments } from "@/lib/validation/weather-fields";
 
@@ -17,7 +18,7 @@ export async function updateBulletin(
   const metadata = bulletin.metadata;
   const forecastDate = metadata.forecast_date;
   const publicationTime = metadata.publication_time;
-  const validityPeriod = metadata.validity_period.trim();
+  const validityPeriod = formatValidityPeriod(metadata);
 
   await client.query(
     `UPDATE weather_bulletin SET

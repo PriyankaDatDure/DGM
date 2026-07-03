@@ -1,6 +1,6 @@
 import { BulletinData, ValidationMessage, ValidationResult, WeatherEntry, WizardStep } from "./types";
 import { HAZARDS, REGIONS, RISK_LEVELS, WIND_DIRECTIONS, isPrefectureInRegion } from "./constants";
-import { isValidityPeriodEndBeforeStart } from "./validity-period";
+import { isStructuredValidityEndBeforeStart } from "./validity-period";
 
 const num = (v: string): number => parseFloat(v);
 const has = (v: string | undefined): boolean => v !== undefined && v.trim() !== "";
@@ -213,12 +213,18 @@ function validateMetadataStep(data: BulletinData): ValidationResult {
     fieldBlocking.add("meta:publication_time");
   }
 
-  if (!has(m.validity_period)) {
+  const validityMissing =
+    !has(m.validity_date) || !has(m.validity_start_time) || !has(m.validity_end_time);
+  if (!has(m.validity_date)) fieldBlocking.add("meta:validity_date");
+  if (!has(m.validity_start_time)) fieldBlocking.add("meta:validity_start_time");
+  if (!has(m.validity_end_time)) fieldBlocking.add("meta:validity_end_time");
+  if (validityMissing) {
     blocking.push({ key: "validityPeriodMissing" });
-    fieldBlocking.add("meta:validity_period");
-  } else if (isValidityPeriodEndBeforeStart(m.validity_period)) {
+  } else if (
+    isStructuredValidityEndBeforeStart(m.validity_date, m.validity_start_time, m.validity_end_time)
+  ) {
     blocking.push({ key: "validityPeriodInconsistent" });
-    fieldBlocking.add("meta:validity_period");
+    fieldBlocking.add("meta:validity_end_time");
   }
 
   if (!has(m.data_sources)) {

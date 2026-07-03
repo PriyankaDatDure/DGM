@@ -10,6 +10,7 @@ export const HAZARD_I18N_KEYS: Record<Hazard, string> = {
   "Heat wave": "heatWave",
   Flood: "flood",
   "Strong wind": "strongWind",
+  Dust: "dust",
 };
 
 export const RISK_LEVEL_I18N_KEYS: Record<RiskLevel, string> = {
