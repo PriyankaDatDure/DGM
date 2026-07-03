@@ -34,7 +34,6 @@ export default function AppHeader({ username }: AppHeaderProps) {
         <div className="sub">{tBrand("subtitle")}</div>
       </div>
       <div className="header-actions">
-        <LocaleSwitcher />
         <Link href="/" className="icon-btn header-home-btn" title={tNav("home")} aria-label={tNav("home")}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
@@ -54,6 +53,7 @@ export default function AppHeader({ username }: AppHeaderProps) {
         <Link href="/dashboard" className="btn admin-link-btn">
           {tNav("dashboard")}
         </Link>
+        <LocaleSwitcher />
         <button
           className="btn logout-btn"
           type="button"
