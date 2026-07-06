@@ -1,6 +1,7 @@
 "use client";
 
 import EditIconButton from "@/components/admin/EditIconButton";
+import DownloadIconButton from "@/components/admin/DownloadIconButton";
 
 interface Column<T> {
   key: string;
@@ -13,6 +14,8 @@ interface LineListTableProps<T> {
   rows: T[];
   idKey: keyof T;
   onEdit: (row: T) => void;
+  onDownload?: (row: T) => void;
+  downloadingId?: string | null;
   emptyMessage?: string;
 }
 
@@ -21,6 +24,8 @@ export default function LineListTable<T extends object>({
   rows,
   idKey,
   onEdit,
+  onDownload,
+  downloadingId = null,
   emptyMessage = "No records found.",
 }: LineListTableProps<T>) {
   if (rows.length === 0) {
@@ -52,6 +57,12 @@ export default function LineListTable<T extends object>({
                 ))}
                 <td className="table-actions line-list-actions">
                   <EditIconButton onClick={() => onEdit(row)} />
+                  {onDownload && (
+                    <DownloadIconButton
+                      onClick={() => onDownload(row)}
+                      disabled={downloadingId === String(rowId)}
+                    />
+                  )}
                 </td>
               </tr>
             );

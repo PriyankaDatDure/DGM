@@ -25,6 +25,7 @@ export default function NationalHazardStep({ data, onChange, fieldBlocking, fiel
       {HAZARDS.map((h) => {
         const entry = data[h];
         const set = (key: keyof NationalHazardEntry, value: string) => onChange(h, { ...entry, [key]: value });
+        const commentRequired = entry.risk_level === "High" || entry.risk_level === "Very High";
         return (
           <div className="hazard-block" key={h}>
             <h4>{hazardLabel(h)} <span className="badge">{tCommon("national")}</span></h4>
@@ -41,8 +42,17 @@ export default function NationalHazardStep({ data, onChange, fieldBlocking, fiel
               <Field label={t("areasConcerned")} optional fieldKey={`nathazard:${h}:areas_concerned`} fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}>
                 <input type="text" value={entry.areas_concerned} onChange={(e) => set("areas_concerned", e.target.value)} />
               </Field>
-              <Field label={t("riskComment")} required full fieldKey={`nathazard:${h}:comment`} fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
-                hint={t("riskCommentHint")} errorMsg={t("riskCommentError")}>
+              <Field
+                label={t("riskComment")}
+                required={commentRequired}
+                optional={!commentRequired}
+                full
+                fieldKey={`nathazard:${h}:comment`}
+                fieldBlocking={fieldBlocking}
+                fieldWarning={fieldWarning}
+                hint={commentRequired ? t("riskCommentHint") : undefined}
+                errorMsg={t("riskCommentError")}
+              >
                 <textarea value={entry.comment} onChange={(e) => set("comment", e.target.value)} />
               </Field>
               <Field label={t("recommendations")} optional full fieldKey={`nathazard:${h}:recommendations`} fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}>

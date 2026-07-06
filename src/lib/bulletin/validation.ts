@@ -372,14 +372,6 @@ function validateRegionHazardStep(data: BulletinData): ValidationResult {
           fieldBlocking.add(`${key}:affected_prefectures`);
         }
       });
-
-      if (
-        hz.affected_prefectures.length === 0 &&
-        (hz.risk_level === "None" || !has(hz.risk_level))
-      ) {
-        warnings.push({ key: "regionHazardPrefecturesEmptyWarning", params: base });
-        fieldWarning.add(`${key}:affected_prefectures`);
-      }
     });
   });
 

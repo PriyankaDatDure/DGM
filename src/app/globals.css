@@ -1281,10 +1281,14 @@ button.btn.logout-btn:hover {
 }
 
 .line-list-actions-col {
-  width: 64px;
+  width: 96px;
 }
 
 .line-list-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   text-align: center;
 }
 

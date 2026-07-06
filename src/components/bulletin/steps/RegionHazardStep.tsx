@@ -83,10 +83,16 @@ export default function RegionHazardStep({ data, onChange, fieldBlocking, fieldW
                     </Field>
                     <Field
                       label={tNat("riskComment")}
+                      required={entry.risk_level === "High" || entry.risk_level === "Very High"}
+                      optional={entry.risk_level !== "High" && entry.risk_level !== "Very High"}
                       fieldKey={`${key}:comment`}
                       fieldBlocking={fieldBlocking}
                       fieldWarning={fieldWarning}
-                      hint={tNat("riskCommentHint")}
+                      hint={
+                        entry.risk_level === "High" || entry.risk_level === "Very High"
+                          ? tNat("riskCommentHint")
+                          : undefined
+                      }
                       errorMsg={tNat("riskCommentError")}
                     >
                       <input type="text" value={entry.comment} onChange={(e) => set("comment", e.target.value)} />
@@ -107,13 +113,14 @@ export default function RegionHazardStep({ data, onChange, fieldBlocking, fieldW
                     </Field>
                     <Field
                       label={t("affectedPrefectures")}
+                      required={Boolean(entry.risk_level) && entry.risk_level !== "None"}
+                      optional={!entry.risk_level || entry.risk_level === "None"}
                       full
                       fieldKey={`${key}:affected_prefectures`}
                       fieldBlocking={fieldBlocking}
                       fieldWarning={fieldWarning}
                       hint={t("affectedPrefecturesHint")}
                       errorMsg={t("affectedPrefecturesError")}
-                      warnMsg={t("affectedPrefecturesWarn")}
                     >
                       <PrefectureChipPicker
                         options={prefecturesForRegion(region)}

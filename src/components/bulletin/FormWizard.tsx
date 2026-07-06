@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -34,6 +34,8 @@ const STEP_KEYS = [
   "regionHazards",
   "interpretation",
 ] as const;
+
+const EMPTY_FIELD_SET = new Set<string>();
 
 function initBulletin(): BulletinData {
   const regionForecast = {} as BulletinData["regionForecast"];
@@ -78,6 +80,7 @@ export default function FormWizard({
   const [step, setStep] = useState(0);
   const [bulletin, setBulletin] = useState<BulletinData>(initialBulletin ?? initBulletin());
   const [result, setResult] = useState<ValidationResult | null>(null);
+  const [validationMode, setValidationMode] = useState<"step" | "full" | null>(null);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(
     loadError ? { msg: loadError, error: true } : null
   );
@@ -85,8 +88,32 @@ export default function FormWizard({
 
   const stepLabels = STEP_KEYS.map((key) => t(`steps.${key}`));
 
-  const fieldBlocking = result?.fieldBlocking ?? new Set<string>();
-  const fieldWarning = result?.fieldWarning ?? new Set<string>();
+  const fieldBlocking =
+    validationMode !== null && result ? result.fieldBlocking : EMPTY_FIELD_SET;
+  const fieldWarning =
+    validationMode !== null && result ? result.fieldWarning : EMPTY_FIELD_SET;
+
+  useEffect(() => {
+    if (validationMode === "step") {
+      const stepResult = validateBulletinStep(bulletin, step as WizardStep);
+      if (stepResult.blocking.length === 0 && stepResult.warnings.length === 0) {
+        setResult(null);
+        setValidationMode(null);
+      } else {
+        setResult(stepResult);
+      }
+      return;
+    }
+    if (validationMode === "full") {
+      const fullResult = validateBulletin(bulletin);
+      if (fullResult.blocking.length === 0) {
+        setResult(null);
+        setValidationMode(null);
+      } else {
+        setResult(fullResult);
+      }
+    }
+  }, [bulletin, step, validationMode]);
 
   const showStepBlockingToast = (count: number) => {
     setToast({
@@ -98,12 +125,14 @@ export default function FormWizard({
 
   const tryContinue = () => {
     const stepResult = validateBulletinStep(bulletin, step as WizardStep);
-    setResult(stepResult);
     if (stepResult.blocking.length > 0) {
+      setResult(stepResult);
+      setValidationMode("step");
       showStepBlockingToast(stepResult.blocking.length);
       return;
     }
     setResult(null);
+    setValidationMode(null);
     setStep((s) => Math.min(s + 1, WIZARD_STEP_COUNT - 1));
   };
 
@@ -111,6 +140,7 @@ export default function FormWizard({
     if (target === step) return;
     if (target < step) {
       setResult(null);
+      setValidationMode(null);
       setStep(target);
     }
   };
@@ -119,6 +149,7 @@ export default function FormWizard({
     setStep(0);
     setBulletin(initBulletin());
     setResult(null);
+    setValidationMode(null);
     setToast(null);
     router.replace("/");
     router.refresh();
@@ -126,8 +157,9 @@ export default function FormWizard({
 
   const saveBulletin = async () => {
     const fullResult = validateBulletin(bulletin);
-    setResult(fullResult);
     if (fullResult.blocking.length > 0) {
+      setResult(fullResult);
+      setValidationMode("full");
       const errorStep = findFirstStepWithBlocking(bulletin);
       setStep(errorStep);
       setToast({
