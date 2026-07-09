@@ -6,14 +6,12 @@ import {
   deleteNationalHazardRisk,
   updateNationalHazardRisk,
 } from "@/actions/national-hazard-risk";
-import { HAZARDS, PREFECTURES, RISK_LEVELS } from "@/lib/bulletin/constants";
-import { parseStoredPrefectures, serializeStoredPrefectures } from "@/lib/bulletin/region-prefectures";
+import { HAZARDS, RISK_LEVELS } from "@/lib/bulletin/constants";
 import type { NationalHazardRiskInput } from "@/types/actions";
 import type { NationalHazardRiskRow, WeatherBulletinOption } from "@/types/database";
 import BulletinSelect from "@/components/admin/BulletinSelect";
 import DataTable from "@/components/admin/DataTable";
 import StatusMessage from "@/components/admin/StatusMessage";
-import PrefectureChipPicker from "@/components/bulletin/PrefectureChipPicker";
 import { formatDateValue } from "@/lib/format/dates";
 
 const emptyForm = (): Omit<NationalHazardRiskInput, "bulletin_id"> => ({
@@ -55,15 +53,6 @@ export default function NationalHazardRiskManager({ initialRows, bulletinOptions
 
   const set = (key: keyof typeof form, value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
-
-  const selectedPrefectures = parseStoredPrefectures(form.areas_concerned);
-
-  const togglePrefecture = (prefecture: string) => {
-    const next = selectedPrefectures.includes(prefecture)
-      ? selectedPrefectures.filter((p) => p !== prefecture)
-      : [...selectedPrefectures, prefecture];
-    set("areas_concerned", serializeStoredPrefectures(next) ?? "");
-  };
 
   const resetForm = () => {
     setForm(emptyForm());
@@ -124,14 +113,6 @@ export default function NationalHazardRiskManager({ initialRows, bulletinOptions
                 <option key={level} value={level}>{level}</option>
               ))}
             </select>
-          </div>
-          <div className="field full">
-            <label>Affected prefectures</label>
-            <PrefectureChipPicker
-              options={PREFECTURES}
-              selected={selectedPrefectures}
-              onToggle={togglePrefecture}
-            />
           </div>
           <div className="field full">
             <label>Risk comment</label>

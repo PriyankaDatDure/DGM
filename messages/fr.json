@@ -312,7 +312,7 @@
     "s3": {
       "title": "Risques climatiques — national et régions",
       "chip": "4 aléas chacun",
-      "subtitle": "National d'abord, puis chaque région. Commentaire obligatoire pour Élevé / Très élevé. Préfectures si risque ≠ Aucun.",
+      "subtitle": "National d'abord, puis chaque région. Commentaire obligatoire pour Élevé / Très élevé. Préfectures concernées obligatoires par région si risque ≠ Aucun.",
       "hazardFilter": "Afficher l'aléa :",
       "filterAll": "Tous",
       "filterNote": "Le filtre est une aide visuelle — les quatre aléas restent obligatoires.",

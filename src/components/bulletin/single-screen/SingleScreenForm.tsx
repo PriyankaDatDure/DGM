@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import AppHeader from "@/components/layout/AppHeader";
 import MultiSelectDropdown from "@/components/bulletin/single-screen/MultiSelectDropdown";
-import PrefectureChipPicker from "@/components/bulletin/PrefectureChipPicker";
 import {
   cardCls,
   cellCls,
@@ -34,7 +33,6 @@ import {
 import {
   CONFIDENCE_LEVELS,
   HAZARDS,
-  PREFECTURES,
   REGIONS,
   RISK_LEVELS,
   THERMAL_COMFORT_LEVELS,
@@ -140,7 +138,6 @@ export default function SingleScreenForm({
   const locale = useLocale();
   const tWizard = useTranslations("wizard");
   const tCommon = useTranslations("common");
-  const tNatHazard = useTranslations("form.nationalHazard");
   const { hazard: hazardLabel, riskLevel, windDirection, confidence } = useEnumLabels();
   const { formatAll, formatOne } = useValidationFormatter();
 
@@ -325,24 +322,6 @@ export default function SingleScreenForm({
         [hazard]: { ...b.nationalHazard[hazard], [field]: value },
       },
     }));
-  };
-
-  const toggleNationalPrefecture = (hazard: Hazard, prefecture: string) => {
-    touchField(`nathazard:${hazard}:affected_prefectures`);
-    setBulletin((b) => {
-      const entry = b.nationalHazard[hazard];
-      const exists = entry.affected_prefectures.includes(prefecture);
-      const affected_prefectures = exists
-        ? entry.affected_prefectures.filter((p) => p !== prefecture)
-        : [...entry.affected_prefectures, prefecture];
-      return {
-        ...b,
-        nationalHazard: {
-          ...b.nationalHazard,
-          [hazard]: { ...entry, affected_prefectures },
-        },
-      };
-    });
   };
 
   const setRegionHazard = (
@@ -832,10 +811,12 @@ export default function SingleScreenForm({
                   </button>
                   {open && (
                     <div className="hazard-grid-wrap px-4 py-2">
-                      <div className="hazard-grid hazard-grid-header">
+                      <div
+                        className={`hazard-grid hazard-grid-header ${isNat ? "hazard-grid-national" : ""}`}
+                      >
                         <div>{t("s3.colHazard")}</div>
                         <div>{t("s3.colRisk")}</div>
-                        <div>{t("s3.prefectures")}</div>
+                        {!isNat && <div>{t("s3.prefectures")}</div>}
                         <div>{t("s3.colComment")}</div>
                       </div>
                       {HAZARDS.filter((h) => hazardFilter === "All" || hazardFilter === h).map(
@@ -851,10 +832,12 @@ export default function SingleScreenForm({
                           const prefKey = `${keyPrefix}:affected_prefectures`;
                           const prefOpenKey = `${scope}:${h}`;
                           const prefDisabled =
-                            !isNat &&
-                            (!entry.risk_level || entry.risk_level === "None");
+                            !entry.risk_level || entry.risk_level === "None";
                           return (
-                            <div key={h} className="hazard-grid hazard-grid-row">
+                            <div
+                              key={h}
+                              className={`hazard-grid hazard-grid-row ${isNat ? "hazard-grid-national" : ""}`}
+                            >
                               <div className="hazard-grid-label">{hazardLabel(h)}</div>
                               <FieldCell
                                 errorMsg={fieldError(`${keyPrefix}:risk_level`)}
@@ -877,21 +860,7 @@ export default function SingleScreenForm({
                                   ))}
                                 </select>
                               </FieldCell>
-                              {isNat ? (
-                                <FieldCell
-                                  errorMsg={fieldError(`${keyPrefix}:affected_prefectures`)}
-                                  warnMsg={fieldWarn(`${keyPrefix}:affected_prefectures`)}
-                                >
-                                  <PrefectureChipPicker
-                                    options={PREFECTURES}
-                                    selected={bulletin.nationalHazard[h].affected_prefectures}
-                                    onToggle={(prefecture) => toggleNationalPrefecture(h, prefecture)}
-                                  />
-                                  <p className="mt-1 text-[10px] text-[#8a95a0]">
-                                    {tNatHazard("affectedPrefecturesHint")}
-                                  </p>
-                                </FieldCell>
-                              ) : (
+                              {!isNat && (
                                 <FieldCell errorMsg={fieldError(prefKey)} warnMsg={fieldWarn(prefKey)}>
                                   <MultiSelectDropdown
                                     open={prefectureOpen === prefOpenKey}

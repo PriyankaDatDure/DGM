@@ -312,7 +312,7 @@
     "s3": {
       "title": "Climate hazard risk — national & regions",
       "chip": "4 hazards each",
-      "subtitle": "National first, then each region. A comment is required for High / Very High. Pick affected prefectures when risk is not None.",
+      "subtitle": "National first, then each region. A comment is required for High / Very High. Affected prefectures are required per region when risk is not None.",
       "hazardFilter": "Show hazard type:",
       "filterAll": "All",
       "filterNote": "Filter is a view convenience — all four are still required.",

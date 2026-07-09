@@ -932,10 +932,16 @@ button.btn.logout-btn:hover {
 
 .hazard-grid {
   display: grid;
-  grid-template-columns: 7.5rem 9rem minmax(9rem, 1.15fr) minmax(11rem, 1.85fr);
+  width: 100%;
+  grid-template-columns: 6.5rem 9.5rem minmax(10rem, 1.1fr) minmax(14rem, 2.5fr);
   gap: 0.625rem;
   align-items: start;
   min-width: 44rem;
+}
+
+.hazard-grid-national {
+  grid-template-columns: 6.5rem 9.5rem minmax(0, 1fr);
+  min-width: 100%;
 }
 
 .hazard-grid-header {
@@ -964,6 +970,13 @@ button.btn.logout-btn:hover {
   font-weight: 500;
   color: #1f2d3a;
   line-height: 1.3;
+}
+
+.hazard-grid input,
+.hazard-grid select,
+.hazard-grid .ms-dropdown-trigger {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hazard-grid .ms-dropdown-trigger {

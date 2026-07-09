@@ -254,13 +254,6 @@ function validateNationalHazardStep(data: BulletinData): ValidationResult {
       });
     }
 
-    if (has(hz.risk_level) && hz.risk_level !== "None" && hz.affected_prefectures.length === 0) {
-      markBlock(result, `nathazard:${h}:affected_prefectures`, {
-        key: "nationalHazardPrefecturesMissing",
-        params,
-      });
-    }
-
     if (
       h === "Heat wave" &&
       isHighOrVeryHigh(hz.risk_level) &&

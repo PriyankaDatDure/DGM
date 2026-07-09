@@ -304,11 +304,6 @@ export async function generateBulletinPdf(
       const hz = bulletin.nationalHazard[hazard];
       hazardTitle(doc, hazard);
       fieldRow(doc, "Risk level", hz.risk_level);
-      fieldRow(
-        doc,
-        "Affected prefectures",
-        hz.affected_prefectures.length > 0 ? hz.affected_prefectures.join(", ") : ""
-      );
       if (hz.comment.trim()) textBlock(doc, "Risk comment", hz.comment);
       if (hz.recommendations.trim()) textBlock(doc, "Recommendations", hz.recommendations);
       doc.moveDown(0.15);
