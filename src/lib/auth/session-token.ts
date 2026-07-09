@@ -3,6 +3,7 @@ import { getAuthSecret } from "./config";
 export type SessionPayload = {
   userId: number;
   username: string;
+  fullName?: string;
   role: string;
   exp: number;
 };

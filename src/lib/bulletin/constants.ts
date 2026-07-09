@@ -27,4 +27,12 @@ export const WIND_DIRECTIONS: WindDirection[] = [
   "North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West",
 ];
 export const CONFIDENCE_LEVELS: Confidence[] = ["Low", "Medium", "High"];
+export const THERMAL_COMFORT_LEVELS = [
+  "Comfortable",
+  "Thermal discomfort",
+  "Significant thermal discomfort",
+  "Confirmed health danger",
+  "Danger of death",
+] as const;
+export type ThermalComfortLevel = (typeof THERMAL_COMFORT_LEVELS)[number];
 export const SUBMISSION_STATUSES: SubmissionStatus[] = ["Draft", "Submitted", "Validated"];

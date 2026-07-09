@@ -65,9 +65,9 @@ export default function DashboardBulletinList({ initialRows }: Props) {
   return (
     <div className="dashboard-section">
       <div className="dashboard-intro panel">
-        <h2>Weather bulletins</h2>
+        <h2>Linelist</h2>
         <p className="desc">
-          Use the download icon to export a PDF of all filled form steps, or the edit icon to update a bulletin.
+          Weather bulletins — use the download icon to export a PDF, or the edit icon to update a bulletin.
         </p>
       </div>
 

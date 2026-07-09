@@ -2,9 +2,10 @@
 
 import { BulletinMetadata } from "@/lib/bulletin/types";
 import { SUBMISSION_STATUSES } from "@/lib/bulletin/constants";
+import { syncValidityFromForecast } from "@/lib/bulletin/validity-period";
 import { useEnumLabels } from "@/lib/i18n/use-enum-labels";
 import Field from "@/components/bulletin/Field";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 interface Props {
   data: BulletinMetadata;
@@ -13,11 +14,21 @@ interface Props {
   fieldWarning: Set<string>;
 }
 
+function formatDisplayDate(iso: string, locale: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { dateStyle: "medium" });
+}
+
 export default function MetadataStep({ data, onChange, fieldBlocking, fieldWarning }: Props) {
   const t = useTranslations("form.metadata");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { submissionStatus } = useEnumLabels();
-  const set = (key: keyof BulletinMetadata, value: string) => onChange({ ...data, [key]: value });
+  const set = (key: keyof BulletinMetadata, value: string) => {
+    const next = { ...data, [key]: value };
+    onChange(key === "forecast_date" ? syncValidityFromForecast(next) : next);
+  };
 
   return (
     <div className="panel">
@@ -34,27 +45,13 @@ export default function MetadataStep({ data, onChange, fieldBlocking, fieldWarni
           <input type="time" value={data.publication_time} onChange={(e) => set("publication_time", e.target.value)} />
         </Field>
 
-        <Field label={t("validityDate")} required fieldKey="meta:validity_date" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
-          hint={t("validityDateHint")} errorMsg={t("validityDateError")}>
-          <input type="date" value={data.validity_date} onChange={(e) => set("validity_date", e.target.value)} />
-        </Field>
-
-        <Field label={t("validityStartTime")} required fieldKey="meta:validity_start_time" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
-          hint={t("validityStartTimeHint")} errorMsg={t("validityStartTimeError")}>
-          <input type="time" value={data.validity_start_time} onChange={(e) => set("validity_start_time", e.target.value)} />
-        </Field>
-
-        <Field label={t("validityEndTime")} required fieldKey="meta:validity_end_time" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
-          hint={t("validityEndTimeHint")}
-          errorMsg={
-            fieldBlocking.has("meta:validity_end_time") &&
-            data.validity_date.trim() &&
-            data.validity_start_time.trim() &&
-            data.validity_end_time.trim()
-              ? t("validityPeriodInconsistent")
-              : t("validityEndTimeError")
-          }>
-          <input type="time" value={data.validity_end_time} onChange={(e) => set("validity_end_time", e.target.value)} />
+        <Field label={t("validityPeriod")} required fieldKey="meta:forecast_date" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}
+          hint={t("validityPeriodHint")}>
+          <div className="readonly-field rounded border border-black/15 bg-[#f3f1eb] px-2 py-1.5 text-sm text-[#5c6a76]">
+            {data.forecast_date
+              ? t("validityPeriodValue", { date: formatDisplayDate(data.forecast_date, locale) })
+              : t("validityPeriodPending")}
+          </div>
         </Field>
 
         <Field label={t("dataSources")} required full fieldKey="meta:data_sources" fieldBlocking={fieldBlocking} fieldWarning={fieldWarning}

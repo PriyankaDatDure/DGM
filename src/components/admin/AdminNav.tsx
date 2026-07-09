@@ -13,7 +13,7 @@ export default function AdminNav() {
   return (
     <nav className="admin-nav">
       <Link href="/dashboard" className="admin-nav-link">
-        Dashboard
+        Linelist
       </Link>
       <Link href="/" className="admin-nav-link">
         Transmission form

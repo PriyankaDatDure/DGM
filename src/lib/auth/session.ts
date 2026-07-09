@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { AUTH_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "./config";
 import { signSessionToken, verifySessionToken, type SessionPayload } from "./session-token";
 
-export type SessionUser = Pick<SessionPayload, "userId" | "username" | "role">;
+export type SessionUser = Pick<SessionPayload, "userId" | "username" | "fullName" | "role">;
 
 export async function isAuthenticated(sessionValue: string | undefined): Promise<boolean> {
   if (!sessionValue) return false;
@@ -41,6 +41,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   return {
     userId: payload.userId,
     username: payload.username,
+    fullName: payload.fullName,
     role: payload.role,
   };
 }

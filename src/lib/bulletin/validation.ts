@@ -1,6 +1,6 @@
 import { BulletinData, ValidationMessage, ValidationResult, WeatherEntry, WizardStep } from "./types";
-import { HAZARDS, REGIONS, RISK_LEVELS, WIND_DIRECTIONS, isPrefectureInRegion } from "./constants";
-import { isStructuredValidityEndBeforeStart } from "./validity-period";
+import { HAZARDS, REGIONS, RISK_LEVELS, THERMAL_COMFORT_LEVELS, WIND_DIRECTIONS, isPrefectureInRegion } from "./constants";
+import { syncValidityFromForecast } from "./validity-period";
 
 const num = (v: string): number => parseFloat(v);
 const has = (v: string | undefined): boolean => v !== undefined && v.trim() !== "";
@@ -16,157 +16,141 @@ function isHighOrVeryHigh(level: string): boolean {
   return level === "High" || level === "Very High";
 }
 
+function markBlock(result: ValidationResult, fieldKeys: string | string[], message: ValidationMessage) {
+  result.blocking.push(message);
+  for (const key of Array.isArray(fieldKeys) ? fieldKeys : [fieldKeys]) {
+    result.fieldBlocking.add(key);
+    result.fieldBlockingMsg[key] = message;
+  }
+}
+
+function markWarn(result: ValidationResult, fieldKeys: string | string[], message: ValidationMessage) {
+  result.warnings.push(message);
+  for (const key of Array.isArray(fieldKeys) ? fieldKeys : [fieldKeys]) {
+    result.fieldWarning.add(key);
+    result.fieldWarningMsg[key] = message;
+  }
+}
+
 type WeatherScope = { scope: "national" } | { scope: "region"; region: string };
 
 function validateWeatherEntry(
   weatherScope: WeatherScope,
   keyPrefix: string,
   w: WeatherEntry,
-  blocking: ValidationMessage[],
-  warnings: ValidationMessage[],
-  fieldBlocking: Set<string>,
-  fieldWarning: Set<string>
+  result: ValidationResult
 ) {
   const scopeParam =
     weatherScope.scope === "national" ? "national" : `region:${weatherScope.region}`;
   const p = { scope: scopeParam };
 
   if (!has(w.temp_min_c)) {
-    blocking.push({ key: "tempMinMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_min_c`);
+    markBlock(result, `${keyPrefix}:temp_min_c`, { key: "tempMinMissing", params: p });
   } else if (!isNumeric(w.temp_min_c)) {
-    blocking.push({ key: "tempMinInvalid", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_min_c`);
+    markBlock(result, `${keyPrefix}:temp_min_c`, { key: "tempMinInvalid", params: p });
   }
 
   if (!has(w.temp_max_c)) {
-    blocking.push({ key: "tempMaxMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_max_c`);
+    markBlock(result, `${keyPrefix}:temp_max_c`, { key: "tempMaxMissing", params: p });
   } else if (!isNumeric(w.temp_max_c)) {
-    blocking.push({ key: "tempMaxInvalid", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_max_c`);
+    markBlock(result, `${keyPrefix}:temp_max_c`, { key: "tempMaxInvalid", params: p });
   }
 
   const tmin = num(w.temp_min_c);
   const tmax = num(w.temp_max_c);
 
   if (isNumeric(w.temp_min_c) && isNumeric(w.temp_max_c) && tmin > tmax) {
-    blocking.push({ key: "tempMinHigherThanMax", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_min_c`);
-    fieldBlocking.add(`${keyPrefix}:temp_max_c`);
+    const message = { key: "tempMinHigherThanMax", params: p };
+    markBlock(result, [`${keyPrefix}:temp_min_c`, `${keyPrefix}:temp_max_c`], message);
   }
 
   if (isNumeric(w.temp_min_c) && (tmin < 10 || tmin > 50)) {
-    warnings.push({ key: "tempRangeWarning", params: p });
-    fieldWarning.add(`${keyPrefix}:temp_min_c`);
+    markWarn(result, `${keyPrefix}:temp_min_c`, { key: "tempRangeWarning", params: p });
   }
   if (isNumeric(w.temp_max_c) && (tmax < 10 || tmax > 50)) {
-    warnings.push({ key: "tempRangeWarning", params: p });
-    fieldWarning.add(`${keyPrefix}:temp_max_c`);
+    markWarn(result, `${keyPrefix}:temp_max_c`, { key: "tempRangeWarning", params: p });
   }
 
   if (!has(w.temp_ressentie_c)) {
-    blocking.push({ key: "feelsLikeMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_ressentie_c`);
-  } else if (!isNumeric(w.temp_ressentie_c)) {
-    blocking.push({ key: "feelsLikeInvalid", params: p });
-    fieldBlocking.add(`${keyPrefix}:temp_ressentie_c`);
-  } else {
-    const tfeel = num(w.temp_ressentie_c);
-    if (tfeel < 15 || tfeel > 60) {
-      warnings.push({ key: "feelsLikeWarning", params: p });
-      fieldWarning.add(`${keyPrefix}:temp_ressentie_c`);
-    }
+    markBlock(result, `${keyPrefix}:temp_ressentie_c`, { key: "thermalComfortMissing", params: p });
+  } else if (!(THERMAL_COMFORT_LEVELS as readonly string[]).includes(w.temp_ressentie_c)) {
+    markBlock(result, `${keyPrefix}:temp_ressentie_c`, {
+      key: isNumeric(w.temp_ressentie_c) ? "thermalComfortNumeric" : "thermalComfortInvalid",
+      params: p,
+    });
   }
 
-  const hum = num(w.relative_humidity_pct);
   if (!has(w.relative_humidity_pct)) {
-    blocking.push({ key: "humidityMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:relative_humidity_pct`);
-  } else if (!isNumeric(w.relative_humidity_pct) || hum < 0 || hum > 100) {
-    blocking.push({ key: "humidityRangeError", params: p });
-    fieldBlocking.add(`${keyPrefix}:relative_humidity_pct`);
-  } else if (hum > 95 || hum < 20) {
-    warnings.push({ key: "humidityWarning", params: p });
-    fieldWarning.add(`${keyPrefix}:relative_humidity_pct`);
+    markBlock(result, `${keyPrefix}:relative_humidity_pct`, { key: "humidityMissing", params: p });
+  } else {
+    const hum = num(w.relative_humidity_pct);
+    if (!isNumeric(w.relative_humidity_pct) || hum < 0 || hum > 100) {
+      markBlock(result, `${keyPrefix}:relative_humidity_pct`, { key: "humidityRangeError", params: p });
+    } else if (hum > 95 || hum < 20) {
+      markWarn(result, `${keyPrefix}:relative_humidity_pct`, { key: "humidityWarning", params: p });
+    }
   }
 
   if (has(w.pressure_hpa)) {
     const pres = num(w.pressure_hpa);
     if (!isNumeric(w.pressure_hpa) || pres <= 0) {
-      blocking.push({ key: "pressureError", params: p });
-      fieldBlocking.add(`${keyPrefix}:pressure_hpa`);
+      markBlock(result, `${keyPrefix}:pressure_hpa`, { key: "pressureError", params: p });
     } else if (pres < 850 || pres > 1100) {
-      warnings.push({ key: "pressureWarning", params: p });
-      fieldWarning.add(`${keyPrefix}:pressure_hpa`);
+      markWarn(result, `${keyPrefix}:pressure_hpa`, { key: "pressureWarning", params: p });
     }
   }
 
   if (!has(w.wind_direction)) {
-    blocking.push({ key: "windDirectionMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:wind_direction`);
+    markBlock(result, `${keyPrefix}:wind_direction`, { key: "windDirectionMissing", params: p });
   } else if (!(WIND_DIRECTIONS as readonly string[]).includes(w.wind_direction)) {
-    blocking.push({ key: "windDirectionInvalid", params: p });
-    fieldBlocking.add(`${keyPrefix}:wind_direction`);
+    markBlock(result, `${keyPrefix}:wind_direction`, { key: "windDirectionInvalid", params: p });
   }
 
   if (!has(w.wind_speed_kmh)) {
-    blocking.push({ key: "windSpeedMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:wind_speed_kmh`);
+    markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedMissing", params: p });
   } else if (!isNumeric(w.wind_speed_kmh)) {
-    blocking.push({ key: "windSpeedInvalid", params: p });
-    fieldBlocking.add(`${keyPrefix}:wind_speed_kmh`);
+    markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedInvalid", params: p });
   } else {
     const wspd = num(w.wind_speed_kmh);
     if (wspd < 0) {
-      blocking.push({ key: "windSpeedNegative", params: p });
-      fieldBlocking.add(`${keyPrefix}:wind_speed_kmh`);
-    } else if (wspd > 80) {
-      warnings.push({ key: "windSpeedWarning", params: p });
-      fieldWarning.add(`${keyPrefix}:wind_speed_kmh`);
+      markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedNegative", params: p });
+    } else if (wspd > 108) {
+      markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedRangeError", params: p });
     }
   }
 
   if (!has(w.rainfall_mm)) {
-    blocking.push({ key: "rainfallMissing", params: p });
-    fieldBlocking.add(`${keyPrefix}:rainfall_mm`);
+    markBlock(result, `${keyPrefix}:rainfall_mm`, { key: "rainfallMissing", params: p });
   } else if (!isNumeric(w.rainfall_mm)) {
-    blocking.push({ key: "rainfallInvalid", params: p });
-    fieldBlocking.add(`${keyPrefix}:rainfall_mm`);
+    markBlock(result, `${keyPrefix}:rainfall_mm`, { key: "rainfallInvalid", params: p });
   } else {
     const rain = num(w.rainfall_mm);
     if (rain < 0) {
-      blocking.push({ key: "rainfallNegative", params: p });
-      fieldBlocking.add(`${keyPrefix}:rainfall_mm`);
-    } else if (rain > 100) {
-      warnings.push({ key: "rainfallWarning", params: p });
-      fieldWarning.add(`${keyPrefix}:rainfall_mm`);
+      markBlock(result, `${keyPrefix}:rainfall_mm`, { key: "rainfallNegative", params: p });
+    } else if (rain > 255) {
+      markBlock(result, `${keyPrefix}:rainfall_mm`, { key: "rainfallRangeError", params: p });
     }
   }
 
   if (has(w.sunshine_pct)) {
     const sun = num(w.sunshine_pct);
-    if (!isNumeric(w.sunshine_pct) || sun < 0 || sun > 100) {
-      blocking.push({ key: "sunshineRangeError", params: p });
-      fieldBlocking.add(`${keyPrefix}:sunshine_pct`);
+    if (!isNumeric(w.sunshine_pct) || sun < 0 || sun > 20) {
+      markBlock(result, `${keyPrefix}:sunshine_pct`, { key: "sunshineRangeError", params: p });
     }
   }
 }
 
 function validateRiskLevel(
+  result: ValidationResult,
   riskLevel: string,
   fieldKey: string,
-  blocking: ValidationMessage[],
-  fieldBlocking: Set<string>,
   messageKey: string,
   params?: Record<string, string>
 ) {
   if (!has(riskLevel)) {
-    blocking.push({ key: messageKey, params });
-    fieldBlocking.add(fieldKey);
+    markBlock(result, fieldKey, { key: messageKey, params });
   } else if (!RISK_LEVELS.includes(riskLevel as (typeof RISK_LEVELS)[number])) {
-    blocking.push({ key: "riskLevelInvalid", params });
-    fieldBlocking.add(fieldKey);
+    markBlock(result, fieldKey, { key: "riskLevelInvalid", params });
   }
 }
 
@@ -176,6 +160,8 @@ function createResult(): ValidationResult {
     warnings: [],
     fieldBlocking: new Set<string>(),
     fieldWarning: new Set<string>(),
+    fieldBlockingMsg: {},
+    fieldWarningMsg: {},
   };
 }
 
@@ -184,8 +170,14 @@ function mergeResults(...parts: ValidationResult[]): ValidationResult {
   for (const part of parts) {
     merged.blocking.push(...part.blocking);
     merged.warnings.push(...part.warnings);
-    part.fieldBlocking.forEach((key) => merged.fieldBlocking.add(key));
-    part.fieldWarning.forEach((key) => merged.fieldWarning.add(key));
+    part.fieldBlocking.forEach((key) => {
+      merged.fieldBlocking.add(key);
+      if (part.fieldBlockingMsg[key]) merged.fieldBlockingMsg[key] = part.fieldBlockingMsg[key];
+    });
+    part.fieldWarning.forEach((key) => {
+      merged.fieldWarning.add(key);
+      if (part.fieldWarningMsg[key]) merged.fieldWarningMsg[key] = part.fieldWarningMsg[key];
+    });
   }
   return merged;
 }
@@ -194,57 +186,31 @@ export const WIZARD_STEP_COUNT = 6;
 
 function validateMetadataStep(data: BulletinData): ValidationResult {
   const result = createResult();
-  const { blocking, warnings, fieldBlocking, fieldWarning } = result;
-  const m = data.metadata;
+  const m = syncValidityFromForecast(data.metadata);
 
   if (!has(m.forecast_date)) {
-    blocking.push({ key: "forecastDateMissing" });
-    fieldBlocking.add("meta:forecast_date");
+    markBlock(result, "meta:forecast_date", { key: "forecastDateMissing" });
   } else {
     const days = (Date.now() - new Date(m.forecast_date).getTime()) / 86400000;
     if (days > 2) {
-      warnings.push({ key: "forecastDateOld" });
-      fieldWarning.add("meta:forecast_date");
+      markWarn(result, "meta:forecast_date", { key: "forecastDateOld" });
     }
   }
 
   if (!has(m.publication_time)) {
-    blocking.push({ key: "publicationTimeMissing" });
-    fieldBlocking.add("meta:publication_time");
-  }
-
-  const validityMissing =
-    !has(m.validity_date) || !has(m.validity_start_time) || !has(m.validity_end_time);
-  if (!has(m.validity_date)) fieldBlocking.add("meta:validity_date");
-  if (!has(m.validity_start_time)) fieldBlocking.add("meta:validity_start_time");
-  if (!has(m.validity_end_time)) fieldBlocking.add("meta:validity_end_time");
-  if (validityMissing) {
-    blocking.push({ key: "validityPeriodMissing" });
-  } else if (
-    isStructuredValidityEndBeforeStart(m.validity_date, m.validity_start_time, m.validity_end_time)
-  ) {
-    blocking.push({ key: "validityPeriodInconsistent" });
-    fieldBlocking.add("meta:validity_end_time");
+    markBlock(result, "meta:publication_time", { key: "publicationTimeMissing" });
   }
 
   if (!has(m.data_sources)) {
-    blocking.push({ key: "dataSourcesMissing" });
-    fieldBlocking.add("meta:data_sources");
+    markBlock(result, "meta:data_sources", { key: "dataSourcesMissing" });
   }
 
   if (!has(m.national_forecast_text)) {
-    blocking.push({ key: "nationalForecastTextMissing" });
-    fieldBlocking.add("meta:national_forecast_text");
-  }
-
-  if (!has(m.submission_status)) {
-    blocking.push({ key: "submissionStatusMissing" });
-    fieldBlocking.add("meta:submission_status");
+    markBlock(result, "meta:national_forecast_text", { key: "nationalForecastTextMissing" });
   }
 
   if (!has(m.forecaster_name)) {
-    blocking.push({ key: "forecasterNameMissing" });
-    fieldBlocking.add("meta:forecaster_name");
+    markBlock(result, "meta:forecaster_name", { key: "forecasterNameMissing" });
   }
 
   return result;
@@ -252,15 +218,7 @@ function validateMetadataStep(data: BulletinData): ValidationResult {
 
 function validateNationalForecastStep(data: BulletinData): ValidationResult {
   const result = createResult();
-  validateWeatherEntry(
-    { scope: "national" },
-    "national",
-    data.nationalForecast,
-    result.blocking,
-    result.warnings,
-    result.fieldBlocking,
-    result.fieldWarning
-  );
+  validateWeatherEntry({ scope: "national" }, "national", data.nationalForecast, result);
   return result;
 }
 
@@ -271,10 +229,7 @@ function validateRegionForecastStep(data: BulletinData): ValidationResult {
       { scope: "region", region },
       `region:${region}`,
       data.regionForecast[region],
-      result.blocking,
-      result.warnings,
-      result.fieldBlocking,
-      result.fieldWarning
+      result
     );
   });
   return result;
@@ -282,9 +237,7 @@ function validateRegionForecastStep(data: BulletinData): ValidationResult {
 
 function validateNationalHazardStep(data: BulletinData): ValidationResult {
   const result = createResult();
-  const { blocking, warnings, fieldBlocking, fieldWarning } = result;
   const tmax = num(data.nationalForecast.temp_max_c);
-  const tfeel = num(data.nationalForecast.temp_ressentie_c);
   const rain = num(data.nationalForecast.rainfall_mm);
   const wspd = num(data.nationalForecast.wind_speed_kmh);
 
@@ -292,36 +245,35 @@ function validateNationalHazardStep(data: BulletinData): ValidationResult {
     const hz = data.nationalHazard[h];
     const params = { hazard: h };
 
-    validateRiskLevel(
-      hz.risk_level,
-      `nathazard:${h}:risk_level`,
-      blocking,
-      fieldBlocking,
-      "nationalHazardRiskMissing",
-      params
-    );
+    validateRiskLevel(result, hz.risk_level, `nathazard:${h}:risk_level`, "nationalHazardRiskMissing", params);
 
     if (isHighOrVeryHigh(hz.risk_level) && !has(hz.comment)) {
-      blocking.push({
+      markBlock(result, `nathazard:${h}:comment`, {
         key: "nationalHazardCommentMissing",
         params: { hazard: h, level: hz.risk_level },
       });
-      fieldBlocking.add(`nathazard:${h}:comment`);
+    }
+
+    if (has(hz.risk_level) && hz.risk_level !== "None" && hz.affected_prefectures.length === 0) {
+      markBlock(result, `nathazard:${h}:affected_prefectures`, {
+        key: "nationalHazardPrefecturesMissing",
+        params,
+      });
     }
 
     if (
       h === "Heat wave" &&
       isHighOrVeryHigh(hz.risk_level) &&
-      ((isNumeric(data.nationalForecast.temp_max_c) && tmax < 32) ||
-        (isNumeric(data.nationalForecast.temp_ressentie_c) && tfeel < 32))
+      isNumeric(data.nationalForecast.temp_max_c) &&
+      tmax < 32
     ) {
-      warnings.push({ key: "heatWaveTempWarning" });
+      result.warnings.push({ key: "heatWaveTempWarning" });
     }
     if (h === "Flood" && isHighOrVeryHigh(hz.risk_level) && isNumeric(data.nationalForecast.rainfall_mm) && rain < 10) {
-      warnings.push({ key: "floodRainWarning" });
+      result.warnings.push({ key: "floodRainWarning" });
     }
-    if (h === "Strong wind" && isHighOrVeryHigh(hz.risk_level) && isNumeric(data.nationalForecast.wind_speed_kmh) && wspd < 40) {
-      warnings.push({ key: "windSpeedHazardWarning" });
+    if (h === "Strong wind" && isHighOrVeryHigh(hz.risk_level) && isNumeric(data.nationalForecast.wind_speed_kmh) && wspd < 36) {
+      result.warnings.push({ key: "windSpeedHazardWarning" });
     }
   });
 
@@ -330,7 +282,6 @@ function validateNationalHazardStep(data: BulletinData): ValidationResult {
 
 function validateRegionHazardStep(data: BulletinData): ValidationResult {
   const result = createResult();
-  const { blocking, warnings, fieldBlocking, fieldWarning } = result;
 
   REGIONS.forEach((region) => {
     HAZARDS.forEach((h) => {
@@ -338,38 +289,28 @@ function validateRegionHazardStep(data: BulletinData): ValidationResult {
       const key = `regionhazard:${region}:${h}`;
       const base = { region, hazard: h };
 
-      validateRiskLevel(
-        hz.risk_level,
-        `${key}:risk_level`,
-        blocking,
-        fieldBlocking,
-        "regionHazardRiskMissing",
-        base
-      );
+      validateRiskLevel(result, hz.risk_level, `${key}:risk_level`, "regionHazardRiskMissing", base);
 
       if (isHighOrVeryHigh(hz.risk_level) && !has(hz.comment)) {
-        blocking.push({
+        markBlock(result, `${key}:comment`, {
           key: "regionHazardCommentMissing",
           params: { ...base, level: hz.risk_level },
         });
-        fieldBlocking.add(`${key}:comment`);
       }
 
       if (has(hz.risk_level) && hz.risk_level !== "None" && hz.affected_prefectures.length === 0) {
-        blocking.push({
+        markBlock(result, `${key}:affected_prefectures`, {
           key: "regionHazardPrefecturesMissing",
           params: { ...base, level: hz.risk_level },
         });
-        fieldBlocking.add(`${key}:affected_prefectures`);
       }
 
       hz.affected_prefectures.forEach((prefecture) => {
         if (!isPrefectureInRegion(prefecture, region)) {
-          blocking.push({
+          markBlock(result, `${key}:affected_prefectures`, {
             key: "prefectureNotInRegion",
             params: { ...base, prefecture },
           });
-          fieldBlocking.add(`${key}:affected_prefectures`);
         }
       });
     });
@@ -380,14 +321,11 @@ function validateRegionHazardStep(data: BulletinData): ValidationResult {
 
 function validateInterpretationStep(data: BulletinData): ValidationResult {
   const result = createResult();
-  const { blocking, warnings, fieldBlocking, fieldWarning } = result;
 
   if (!has(data.interpretation.general_situation)) {
-    blocking.push({ key: "interpretationMissing" });
-    fieldBlocking.add("interp:general_situation");
+    markBlock(result, "interp:general_situation", { key: "interpretationMissing" });
   } else if (data.interpretation.general_situation.length < 20) {
-    warnings.push({ key: "interpretationShort" });
-    fieldWarning.add("interp:general_situation");
+    markWarn(result, "interp:general_situation", { key: "interpretationShort" });
   }
 
   return result;

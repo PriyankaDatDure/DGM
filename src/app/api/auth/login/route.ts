@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     await createSession({
       userId: user.user_id,
       username: user.username,
+      fullName: user.full_name,
       role: user.role,
     });
 

@@ -1,5 +1,6 @@
 import { query } from "@/lib/db";
 import { HAZARDS, REGIONS } from "@/lib/bulletin/constants";
+import { parseStoredPrefectures } from "@/lib/bulletin/region-prefectures";
 import type {
   BulletinData,
   Confidence,
@@ -95,7 +96,7 @@ export async function loadBulletinById(bulletinId: string): Promise<BulletinData
     if (HAZARDS.includes(hazard)) {
       nationalHazard[hazard] = {
         risk_level: (row.risk_level ?? "") as RiskLevel | "",
-        areas_concerned: row.areas_concerned ?? "",
+        affected_prefectures: parseStoredPrefectures(row.areas_concerned),
         comment: row.risk_comment ?? "",
         recommendations: row.possible_recommendations ?? "",
       };

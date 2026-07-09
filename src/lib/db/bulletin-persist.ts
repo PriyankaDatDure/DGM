@@ -1,5 +1,6 @@
 import type pg from "pg";
 import { HAZARDS, REGIONS } from "@/lib/bulletin/constants";
+import { serializeStoredPrefectures } from "@/lib/bulletin/region-prefectures";
 import type { BulletinData } from "@/lib/bulletin/types";
 import { formatValidityPeriod } from "@/lib/bulletin/validity-period";
 import { isNonEmpty } from "@/lib/validation/entities";
@@ -73,7 +74,7 @@ export async function persistBulletin(
         forecastDate,
         hazard,
         entry.risk_level,
-        isNonEmpty(entry.areas_concerned) ? entry.areas_concerned.trim() : null,
+        serializeStoredPrefectures(entry.affected_prefectures),
         isNonEmpty(entry.comment) ? entry.comment.trim() : null,
         isNonEmpty(entry.recommendations) ? entry.recommendations.trim() : null,
       ]

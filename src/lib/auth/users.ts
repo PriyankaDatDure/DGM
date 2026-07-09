@@ -12,6 +12,14 @@ export type AuthUser = {
   is_active: boolean;
 };
 
+export async function getUserFullName(userId: number): Promise<string | null> {
+  const result = await query<{ full_name: string }>(
+    `SELECT full_name FROM users WHERE user_id = $1 AND is_active = TRUE LIMIT 1`,
+    [userId]
+  );
+  return result.rows[0]?.full_name?.trim() || null;
+}
+
 export async function findUserByLogin(login: string): Promise<AuthUser | null> {
   const trimmed = login.trim();
   if (!trimmed) return null;

@@ -85,3 +85,18 @@ export function isPrefectureInRegion(prefecture: string, region: RegionCode): bo
 export function isRegionCode(value: string): value is RegionCode {
   return value in REGION_BY_CODE;
 }
+
+/** Parse comma-separated prefecture names stored in national_hazard_risk.areas_concerned. */
+export function parseStoredPrefectures(value: string | null | undefined): string[] {
+  if (!value?.trim()) return [];
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/** Serialize prefecture names for national_hazard_risk.areas_concerned. */
+export function serializeStoredPrefectures(prefectures: readonly string[]): string | null {
+  if (prefectures.length === 0) return null;
+  return prefectures.join(", ");
+}

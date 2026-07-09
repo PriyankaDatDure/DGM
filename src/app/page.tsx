@@ -1,6 +1,7 @@
 import { getSessionUser } from "@/lib/auth/session";
+import { getUserFullName } from "@/lib/auth/users";
 import { getBulletinForEdit } from "@/actions/bulletin-edit";
-import FormWizard from "@/components/bulletin/FormWizard";
+import SingleScreenForm from "@/components/bulletin/single-screen/SingleScreenForm";
 import type { BulletinData } from "@/lib/bulletin/types";
 
 export default async function HomePage({
@@ -11,6 +12,13 @@ export default async function HomePage({
   const user = await getSessionUser();
   const params = await searchParams;
   const editBulletinId = params.edit?.trim() || undefined;
+
+  const fullNameFromDb = user ? await getUserFullName(user.userId) : null;
+  const fullName =
+    fullNameFromDb ||
+    user?.fullName?.trim() ||
+    user?.username ||
+    "User";
 
   let initialBulletin: BulletinData | undefined;
   let loadError: string | undefined;
@@ -25,9 +33,10 @@ export default async function HomePage({
   }
 
   return (
-    <FormWizard
+    <SingleScreenForm
       key={editBulletinId ?? "new"}
       username={user?.username ?? "User"}
+      fullName={fullName}
       editBulletinId={editBulletinId}
       initialBulletin={initialBulletin}
       loadError={loadError}

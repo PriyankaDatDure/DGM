@@ -32,13 +32,13 @@ export const emptyWeatherEntry = (): WeatherEntry => ({
 
 export interface NationalHazardEntry {
   risk_level: RiskLevel | "";
-  areas_concerned: string;
+  affected_prefectures: string[];
   comment: string;
   recommendations: string;
 }
 
 export const emptyNationalHazardEntry = (): NationalHazardEntry => ({
-  risk_level: "", areas_concerned: "", comment: "", recommendations: "",
+  risk_level: "", affected_prefectures: [], comment: "", recommendations: "",
 });
 
 export interface RegionHazardEntry {
@@ -69,7 +69,7 @@ export interface BulletinMetadata {
 
 export const emptyMetadata = (): BulletinMetadata => ({
   forecast_date: "", publication_time: "",
-  validity_date: "", validity_start_time: "", validity_end_time: "",
+  validity_date: "", validity_start_time: "08:00", validity_end_time: "23:59",
   data_sources: "",
   national_forecast_text: "", general_comment: "", submission_status: "", forecaster_name: "",
 });
@@ -110,4 +110,6 @@ export interface ValidationResult {
   // field-level keys so the UI can highlight specific inputs, e.g. "region:R3:temp_max_c"
   fieldBlocking: Set<string>;
   fieldWarning: Set<string>;
+  fieldBlockingMsg: Record<string, ValidationMessage>;
+  fieldWarningMsg: Record<string, ValidationMessage>;
 }

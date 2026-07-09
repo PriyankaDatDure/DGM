@@ -10,6 +10,21 @@ export interface ValidityPeriodFields {
   validity_end_time: string;
 }
 
+export const VALIDITY_START_TIME = "08:00";
+export const VALIDITY_END_TIME = "23:59";
+
+export function syncValidityFromForecast<T extends ValidityPeriodFields & { forecast_date: string }>(
+  metadata: T
+): T {
+  const forecast = metadata.forecast_date.trim();
+  return {
+    ...metadata,
+    validity_date: forecast,
+    validity_start_time: VALIDITY_START_TIME,
+    validity_end_time: VALIDITY_END_TIME,
+  };
+}
+
 function padTime(value: string): string {
   const [h, m] = value.split(":");
   return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
