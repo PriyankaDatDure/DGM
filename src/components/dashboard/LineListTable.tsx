@@ -6,6 +6,7 @@ import DownloadIconButton from "@/components/admin/DownloadIconButton";
 interface Column<T> {
   key: string;
   label: string;
+  className?: string;
   render?: (row: T) => React.ReactNode;
 }
 
@@ -38,7 +39,9 @@ export default function LineListTable<T extends object>({
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key}>{column.label}</th>
+              <th key={column.key} className={column.className}>
+                {column.label}
+              </th>
             ))}
             <th className="line-list-actions-col" aria-label="Actions" />
           </tr>
@@ -49,7 +52,7 @@ export default function LineListTable<T extends object>({
             return (
               <tr key={String(rowId)}>
                 {columns.map((column) => (
-                  <td key={column.key}>
+                  <td key={column.key} className={column.className}>
                     {column.render
                       ? column.render(row)
                       : String((row as Record<string, unknown>)[column.key] ?? "—")}

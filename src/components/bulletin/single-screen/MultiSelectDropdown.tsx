@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 interface Props {
   open: boolean;
   onToggle: () => void;
@@ -27,6 +29,22 @@ export default function MultiSelectDropdown({
   errorMsg,
   warnMsg,
 }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const root = rootRef.current;
+      if (root && !root.contains(event.target as Node)) {
+        onToggle();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open, onToggle]);
+
   const toggle = (option: string) =>
     onChange(value.includes(option) ? value.filter((v) => v !== option) : [...value, option]);
 
@@ -38,7 +56,7 @@ export default function MultiSelectDropdown({
       : value.join(", ");
 
   return (
-    <div className={`relative ${disabled ? "opacity-50" : ""}`}>
+    <div ref={rootRef} className={`relative ${disabled ? "opacity-50" : ""}`}>
       <button
         type="button"
         onClick={disabled ? undefined : onToggle}

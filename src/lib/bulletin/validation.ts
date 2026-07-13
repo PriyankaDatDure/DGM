@@ -1,5 +1,5 @@
-import { BulletinData, ValidationMessage, ValidationResult, WeatherEntry, WizardStep } from "./types";
-import { HAZARDS, REGIONS, RISK_LEVELS, THERMAL_COMFORT_LEVELS, WIND_DIRECTIONS, isPrefectureInRegion } from "./constants";
+import { BulletinData, RegionCode, ValidationMessage, ValidationResult, WeatherEntry, WizardStep } from "./types";
+import { HAZARDS, REGIONS, RISK_LEVELS, WIND_DIRECTIONS, isPrefectureInRegion } from "./constants";
 import { syncValidityFromForecast } from "./validity-period";
 
 const num = (v: string): number => parseFloat(v);
@@ -14,6 +14,10 @@ function isNumeric(value: string): boolean {
 
 function isHighOrVeryHigh(level: string): boolean {
   return level === "High" || level === "Very High";
+}
+
+function inInclusiveRange(value: number, min: number, max: number): boolean {
+  return value >= min && value <= max;
 }
 
 function markBlock(result: ValidationResult, fieldKeys: string | string[], message: ValidationMessage) {
@@ -64,20 +68,19 @@ function validateWeatherEntry(
     markBlock(result, [`${keyPrefix}:temp_min_c`, `${keyPrefix}:temp_max_c`], message);
   }
 
-  if (isNumeric(w.temp_min_c) && (tmin < 10 || tmin > 50)) {
+  if (isNumeric(w.temp_min_c) && !inInclusiveRange(tmin, 5, 50)) {
     markWarn(result, `${keyPrefix}:temp_min_c`, { key: "tempRangeWarning", params: p });
   }
-  if (isNumeric(w.temp_max_c) && (tmax < 10 || tmax > 50)) {
+  if (isNumeric(w.temp_max_c) && !inInclusiveRange(tmax, 5, 50)) {
     markWarn(result, `${keyPrefix}:temp_max_c`, { key: "tempRangeWarning", params: p });
   }
 
   if (!has(w.temp_ressentie_c)) {
-    markBlock(result, `${keyPrefix}:temp_ressentie_c`, { key: "thermalComfortMissing", params: p });
-  } else if (!(THERMAL_COMFORT_LEVELS as readonly string[]).includes(w.temp_ressentie_c)) {
-    markBlock(result, `${keyPrefix}:temp_ressentie_c`, {
-      key: isNumeric(w.temp_ressentie_c) ? "thermalComfortNumeric" : "thermalComfortInvalid",
-      params: p,
-    });
+    markBlock(result, `${keyPrefix}:temp_ressentie_c`, { key: "feelsLikeMissing", params: p });
+  } else if (!isNumeric(w.temp_ressentie_c)) {
+    markBlock(result, `${keyPrefix}:temp_ressentie_c`, { key: "feelsLikeInvalid", params: p });
+  } else if (!inInclusiveRange(num(w.temp_ressentie_c), 15, 60)) {
+    markWarn(result, `${keyPrefix}:temp_ressentie_c`, { key: "feelsLikeRangeWarning", params: p });
   }
 
   if (!has(w.relative_humidity_pct)) {
@@ -86,8 +89,6 @@ function validateWeatherEntry(
     const hum = num(w.relative_humidity_pct);
     if (!isNumeric(w.relative_humidity_pct) || hum < 0 || hum > 100) {
       markBlock(result, `${keyPrefix}:relative_humidity_pct`, { key: "humidityRangeError", params: p });
-    } else if (hum > 95 || hum < 20) {
-      markWarn(result, `${keyPrefix}:relative_humidity_pct`, { key: "humidityWarning", params: p });
     }
   }
 
@@ -95,7 +96,7 @@ function validateWeatherEntry(
     const pres = num(w.pressure_hpa);
     if (!isNumeric(w.pressure_hpa) || pres <= 0) {
       markBlock(result, `${keyPrefix}:pressure_hpa`, { key: "pressureError", params: p });
-    } else if (pres < 850 || pres > 1100) {
+    } else if (!inInclusiveRange(pres, 950, 1050)) {
       markWarn(result, `${keyPrefix}:pressure_hpa`, { key: "pressureWarning", params: p });
     }
   }
@@ -116,6 +117,8 @@ function validateWeatherEntry(
       markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedNegative", params: p });
     } else if (wspd > 108) {
       markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedRangeError", params: p });
+    } else if (wspd > 80) {
+      markWarn(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedWarning", params: p });
     }
   }
 
@@ -127,7 +130,7 @@ function validateWeatherEntry(
     const rain = num(w.rainfall_mm);
     if (rain < 0) {
       markBlock(result, `${keyPrefix}:rainfall_mm`, { key: "rainfallNegative", params: p });
-    } else if (rain > 255) {
+    } else if (rain > 200) {
       markBlock(result, `${keyPrefix}:rainfall_mm`, { key: "rainfallRangeError", params: p });
     }
   }
@@ -346,6 +349,19 @@ export function findFirstStepWithBlocking(data: BulletinData): WizardStep {
     }
   }
   return 0;
+}
+
+export function validateWeatherRow(
+  scope: "National" | RegionCode,
+  entry: WeatherEntry
+): ValidationResult {
+  const result = createResult();
+  if (scope === "National") {
+    validateWeatherEntry({ scope: "national" }, "national", entry, result);
+  } else {
+    validateWeatherEntry({ scope: "region", region: scope }, `region:${scope}`, entry, result);
+  }
+  return result;
 }
 
 export function validateBulletin(data: BulletinData): ValidationResult {

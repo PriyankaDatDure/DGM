@@ -117,6 +117,37 @@ export function FieldCell({
   );
 }
 
+export function ValidateRowButton({
+  onClick,
+  title,
+  passed = false,
+}: {
+  onClick: () => void;
+  title?: string;
+  /** Green only when every field in the row has passed validation. */
+  passed?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`forecast-validate-btn ${passed ? "is-pass" : "is-fail"}`}
+      title={title}
+      aria-label={title}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M20 6 9 17l-5-5"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
 export function Th({
   children,
   req,

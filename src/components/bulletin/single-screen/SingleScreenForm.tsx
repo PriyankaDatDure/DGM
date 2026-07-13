@@ -15,6 +15,7 @@ import {
   SectionHeader,
   SectionTab,
   Th,
+  ValidateRowButton,
 } from "@/components/bulletin/single-screen/FormPrimitives";
 import {
   BulletinData,
@@ -35,7 +36,6 @@ import {
   HAZARDS,
   REGIONS,
   RISK_LEVELS,
-  THERMAL_COMFORT_LEVELS,
   WIND_DIRECTIONS,
   prefecturesForRegion,
   regionDisplayLabel,
@@ -48,7 +48,7 @@ import {
 } from "@/lib/bulletin/data-sources";
 import { sectionErrorCounts, firstSectionWithErrors, sectionForFieldKey } from "@/lib/bulletin/section-errors";
 import { syncValidityFromForecast } from "@/lib/bulletin/validity-period";
-import { validateBulletin } from "@/lib/bulletin/validation";
+import { validateBulletin, validateWeatherRow } from "@/lib/bulletin/validation";
 import { useEnumLabels } from "@/lib/i18n/use-enum-labels";
 import { useValidationFormatter } from "@/lib/i18n/use-validation-formatter";
 import { updateBulletinToDatabase } from "@/actions/bulletin-edit";
@@ -56,6 +56,19 @@ import { submitBulletinToDatabase } from "@/actions/bulletin-submit";
 
 const HAZARD_SCOPES = ["National", ...REGIONS] as const;
 const LS_DRAFT_KEY = "dgm-forecast-draft";
+
+const WEATHER_ROW_FIELDS: (keyof WeatherEntry)[] = [
+  "temp_min_c",
+  "temp_max_c",
+  "temp_ressentie_c",
+  "relative_humidity_pct",
+  "pressure_hpa",
+  "wind_direction",
+  "wind_speed_kmh",
+  "rainfall_mm",
+  "sunshine_pct",
+  "confidence",
+];
 
 function migrateBulletinDraft(draft: BulletinData): BulletinData {
   HAZARDS.forEach((hazard) => {
@@ -106,18 +119,6 @@ function formatDisplayDate(iso: string, locale: string): string {
   return new Date(y, m - 1, d).toLocaleDateString(locale, { dateStyle: "medium" });
 }
 
-function cellState(
-  show: boolean,
-  fieldBlocking: Set<string>,
-  fieldWarning: Set<string>,
-  key: string
-) {
-  if (!show) return "";
-  if (fieldBlocking.has(key)) return "border-red-500 bg-red-50";
-  if (fieldWarning.has(key)) return "border-amber-400 bg-amber-50";
-  return "";
-}
-
 interface Props {
   username: string;
   fullName: string;
@@ -138,7 +139,8 @@ export default function SingleScreenForm({
   const locale = useLocale();
   const tWizard = useTranslations("wizard");
   const tCommon = useTranslations("common");
-  const { hazard: hazardLabel, riskLevel, windDirection, confidence } = useEnumLabels();
+  const { hazard: hazardLabel, riskLevel, windDirection, confidence, submissionStatus } =
+    useEnumLabels();
   const { formatAll, formatOne } = useValidationFormatter();
 
   const isEditing = Boolean(editBulletinId && initialBulletin);
@@ -162,6 +164,9 @@ export default function SingleScreenForm({
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(
     loadError ? { msg: loadError, error: true } : null
   );
+  const [rowValidateState, setRowValidateState] = useState<
+    Record<string, Record<string, "ok" | "err">>
+  >({});
 
   const liveResult = useMemo(() => validateBulletin(bulletin), [bulletin]);
 
@@ -178,14 +183,34 @@ export default function SingleScreenForm({
   };
 
   const fieldWarn = (key: string) => {
-    if (!shouldShowFieldFeedback(key) || liveResult.fieldBlocking.has(key)) return undefined;
+    if (!shouldShowFieldFeedback(key)) return undefined;
+    if (liveResult.fieldBlocking.has(key)) return undefined;
     if (!liveResult.fieldWarning.has(key)) return undefined;
     const msg = liveResult.fieldWarningMsg[key];
     return msg ? formatOne(msg) : undefined;
   };
 
-  const highlight = (key: string) =>
-    cellState(shouldShowFieldFeedback(key), liveResult.fieldBlocking, liveResult.fieldWarning, key);
+  const fieldHighlight = (key: string) => {
+    if (!shouldShowFieldFeedback(key)) return "";
+    if (liveResult.fieldBlocking.has(key)) return "border-red-500 bg-red-50";
+    if (liveResult.fieldWarning.has(key)) return "border-amber-400 bg-amber-50";
+    return "";
+  };
+
+  const highlight = fieldHighlight;
+
+  const cellBorder = (scope: "National" | RegionCode, fieldKey: string) => {
+    const rowState = rowValidateState[scope];
+    if (!rowState || rowState[fieldKey] === undefined) return highlight(fieldKey);
+    return rowState[fieldKey] === "err" ? "forecast-cell-err" : "forecast-cell-ok";
+  };
+
+  const isRowValidatedOk = (scope: "National" | RegionCode) => {
+    const rowState = rowValidateState[scope];
+    if (!rowState) return false;
+    const values = Object.values(rowState);
+    return values.length > 0 && values.every((v) => v === "ok");
+  };
 
   const sectionErrors = useMemo(() => {
     if (submitAttempted) return sectionErrorCounts(liveResult);
@@ -282,6 +307,12 @@ export default function SingleScreenForm({
   const setWeatherField = (scope: "National" | RegionCode, key: keyof WeatherEntry, value: string) => {
     const prefix = scope === "National" ? "national" : `region:${scope}`;
     touchField(`${prefix}:${key}`);
+    setRowValidateState((prev) => {
+      if (!prev[scope]) return prev;
+      const next = { ...prev };
+      delete next[scope];
+      return next;
+    });
     setBulletin((b) => {
       if (scope === "National") {
         return { ...b, nationalForecast: { ...b.nationalForecast, [key]: value } };
@@ -294,6 +325,26 @@ export default function SingleScreenForm({
         },
       };
     });
+  };
+
+  const validateForecastRow = (scope: "National" | RegionCode) => {
+    const entry =
+      scope === "National" ? bulletin.nationalForecast : bulletin.regionForecast[scope];
+    const result = validateWeatherRow(scope, entry);
+    const prefix = scope === "National" ? "national" : `region:${scope}`;
+    const rowState: Record<string, "ok" | "err"> = {};
+    const touched = new Set(touchedFields);
+
+    WEATHER_ROW_FIELDS.forEach((field) => {
+      const key = `${prefix}:${field}`;
+      touched.add(key);
+      const hasIssue =
+        result.fieldBlocking.has(key) || result.fieldWarning.has(key);
+      rowState[key] = hasIssue ? "err" : "ok";
+    });
+
+    setTouchedFields(touched);
+    setRowValidateState((r) => ({ ...r, [scope]: rowState }));
   };
 
   const copyNationalToAll = () => {
@@ -412,6 +463,10 @@ export default function SingleScreenForm({
   };
 
   const status = bulletin.metadata.submission_status || "Draft";
+  const statusLabel =
+    status === "Draft" || status === "Submitted" || status === "Validated"
+      ? submissionStatus(status)
+      : status;
 
   return (
     <div className="min-h-screen bg-[#f5f2ea] text-[#1f2d3a]">
@@ -442,7 +497,7 @@ export default function SingleScreenForm({
                   : "border-white/25 bg-white/5"
               }`}
             >
-              {t("statusLabel", { status: (status || "Draft").toUpperCase() })}
+              {t("statusLabel", { status: statusLabel })}
             </span>
           </div>
         </div>
@@ -535,8 +590,8 @@ export default function SingleScreenForm({
         {/* Section 2 */}
         <section id="s2" className={cardCls}>
           <SectionHeader title={t("s2.title")} chip={t("s2.chip")} subtitle={t("s2.subtitle")} />
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <label className="flex items-center gap-2 text-xs text-[#5c6a76]">
+          <div className="forecast-toolbar">
+            <label className="forecast-toolbar-checkbox">
               <input
                 type="checkbox"
                 checked={showOptional}
@@ -544,7 +599,7 @@ export default function SingleScreenForm({
               />
               {t("s2.showOptional")}
             </label>
-            <button type="button" onClick={copyNationalToAll} className="rounded border border-[#0f3a4a]/30 bg-white px-3 py-1 text-xs font-medium text-[#0f3a4a] hover:bg-[#0f3a4a]/5">
+            <button type="button" onClick={copyNationalToAll} className="forecast-toolbar-copy">
               {t("s2.copyNational")}
             </button>
           </div>
@@ -557,7 +612,7 @@ export default function SingleScreenForm({
                   </th>
                   <Th req className="col-num">{t("s2.minTemp")}</Th>
                   <Th req className="col-num">{t("s2.maxTemp")}</Th>
-                  <Th req className="col-select">{t("s2.thermalComfort")}</Th>
+                  <Th req className="col-num">{t("s2.thermalComfort")}</Th>
                   <Th req className="col-num">{t("s2.humidity")}</Th>
                   {showOptional && <Th className="col-num">{t("s2.pressure")}</Th>}
                   <Th req className="col-select">{t("s2.windDir")}</Th>
@@ -566,6 +621,9 @@ export default function SingleScreenForm({
                   {showOptional && <Th className="col-num">{t("s2.sunshine")}</Th>}
                   {showOptional && <Th className="col-select">{t("s2.confidence")}</Th>}
                   <th className="col-action" />
+                  <th className="col-validate py-2 text-center text-[10px] font-medium uppercase tracking-wider text-[#5c6a76]">
+                    {t("s2.validate")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -574,13 +632,15 @@ export default function SingleScreenForm({
                   const row = isNat ? bulletin.nationalForecast : bulletin.regionForecast[scope];
                   const prefix = isNat ? "national" : `region:${scope}`;
                   const fk = (field: keyof WeatherEntry) => `${prefix}:${field}`;
+                  const cellInputCls = (field: keyof WeatherEntry) =>
+                    `${cellCls} ${cellBorder(scope, fk(field))}`;
                   return (
                     <tr
                       key={scope}
                       className={`border-b border-black/5 ${isNat ? "bg-[#0f3a4a]/5" : ""}`}
                     >
                       <td className={`col-scope py-2 pr-1 text-sm font-semibold ${isNat ? "text-[#0f3a4a]" : ""}`}>
-                        {isNat ? t("s2.national") : scope}
+                        {isNat ? t("s2.national") : regionDisplayLabel(scope)}
                       </td>
                       {(["temp_min_c", "temp_max_c"] as const).map((field) => (
                         <td key={field} className="col-num p-1 align-top">
@@ -590,28 +650,23 @@ export default function SingleScreenForm({
                               step="0.1"
                               value={row[field]}
                               onChange={(e) => setWeatherField(scope, field, e.target.value)}
-                              className={`${cellCls} ${highlight(fk(field))}`}
+                              className={cellInputCls(field)}
                             />
                           </FieldCell>
                         </td>
                       ))}
-                      <td className="col-select p-1 align-top">
+                      <td className="col-num p-1 align-top">
                         <FieldCell
                           errorMsg={fieldError(fk("temp_ressentie_c"))}
                           warnMsg={fieldWarn(fk("temp_ressentie_c"))}
                         >
-                          <select
+                          <input
+                            type="number"
+                            step="0.1"
                             value={row.temp_ressentie_c}
                             onChange={(e) => setWeatherField(scope, "temp_ressentie_c", e.target.value)}
-                            className={`${cellCls} ${highlight(fk("temp_ressentie_c"))}`}
-                          >
-                            <option value="">—</option>
-                            {THERMAL_COMFORT_LEVELS.map((level) => (
-                              <option key={level} value={level}>
-                                {level}
-                              </option>
-                            ))}
-                          </select>
+                            className={cellInputCls("temp_ressentie_c")}
+                          />
                         </FieldCell>
                       </td>
                       <td className="col-num p-1 align-top">
@@ -624,7 +679,7 @@ export default function SingleScreenForm({
                             step="0.1"
                             value={row.relative_humidity_pct}
                             onChange={(e) => setWeatherField(scope, "relative_humidity_pct", e.target.value)}
-                            className={`${cellCls} ${highlight(fk("relative_humidity_pct"))}`}
+                            className={cellInputCls("relative_humidity_pct")}
                           />
                         </FieldCell>
                       </td>
@@ -639,7 +694,7 @@ export default function SingleScreenForm({
                               step="0.1"
                               value={row.pressure_hpa}
                               onChange={(e) => setWeatherField(scope, "pressure_hpa", e.target.value)}
-                              className={`${cellCls} ${highlight(fk("pressure_hpa"))}`}
+                              className={cellInputCls("pressure_hpa")}
                             />
                           </FieldCell>
                         </td>
@@ -652,7 +707,7 @@ export default function SingleScreenForm({
                           <select
                             value={row.wind_direction}
                             onChange={(e) => setWeatherField(scope, "wind_direction", e.target.value)}
-                            className={`${cellCls} ${highlight(fk("wind_direction"))}`}
+                            className={cellInputCls("wind_direction")}
                           >
                             <option value="">—</option>
                             {WIND_DIRECTIONS.map((w) => (
@@ -669,7 +724,7 @@ export default function SingleScreenForm({
                             type="number"
                             value={row.wind_speed_kmh}
                             onChange={(e) => setWeatherField(scope, "wind_speed_kmh", e.target.value)}
-                            className={`${cellCls} ${highlight(fk("wind_speed_kmh"))}`}
+                            className={cellInputCls("wind_speed_kmh")}
                           />
                         </FieldCell>
                       </td>
@@ -679,7 +734,7 @@ export default function SingleScreenForm({
                             type="number"
                             value={row.rainfall_mm}
                             onChange={(e) => setWeatherField(scope, "rainfall_mm", e.target.value)}
-                            className={`${cellCls} ${highlight(fk("rainfall_mm"))}`}
+                            className={cellInputCls("rainfall_mm")}
                           />
                         </FieldCell>
                       </td>
@@ -693,7 +748,7 @@ export default function SingleScreenForm({
                               type="number"
                               value={row.sunshine_pct}
                               onChange={(e) => setWeatherField(scope, "sunshine_pct", e.target.value)}
-                              className={`${cellCls} ${highlight(fk("sunshine_pct"))}`}
+                              className={cellInputCls("sunshine_pct")}
                             />
                           </FieldCell>
                         </td>
@@ -703,7 +758,7 @@ export default function SingleScreenForm({
                           <select
                             value={row.confidence}
                             onChange={(e) => setWeatherField(scope, "confidence", e.target.value)}
-                            className={cellCls}
+                            className={cellInputCls("confidence")}
                           >
                             <option value="">—</option>
                             {CONFIDENCE_LEVELS.map((c) => (
@@ -725,6 +780,13 @@ export default function SingleScreenForm({
                             ⤓
                           </button>
                         )}
+                      </td>
+                      <td className="col-validate p-1 text-center align-middle">
+                        <ValidateRowButton
+                          onClick={() => validateForecastRow(scope)}
+                          title={t("s2.validateRow")}
+                          passed={isRowValidatedOk(scope)}
+                        />
                       </td>
                     </tr>
                   );
