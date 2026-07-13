@@ -12,6 +12,10 @@ export function getAuthSecret(): string {
 }
 
 export type UserRole =
+  | "ADMIN"
+  | "FORECASTER"
+  | "DISTRICT_USER"
+  | "VIEWER"
   | "MOH_NATIONAL_ADMIN"
   | "MOH_DISTRICT_OFFICER"
   | "PUBLIC_DONOR_VIEWER";

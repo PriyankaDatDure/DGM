@@ -113,12 +113,8 @@ function validateWeatherEntry(
     markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedInvalid", params: p });
   } else {
     const wspd = num(w.wind_speed_kmh);
-    if (wspd < 0) {
-      markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedNegative", params: p });
-    } else if (wspd > 108) {
+    if (wspd < 0 || wspd > 30) {
       markBlock(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedRangeError", params: p });
-    } else if (wspd > 80) {
-      markWarn(result, `${keyPrefix}:wind_speed_kmh`, { key: "windSpeedWarning", params: p });
     }
   }
 
@@ -268,7 +264,7 @@ function validateNationalHazardStep(data: BulletinData): ValidationResult {
     if (h === "Flood" && isHighOrVeryHigh(hz.risk_level) && isNumeric(data.nationalForecast.rainfall_mm) && rain < 10) {
       result.warnings.push({ key: "floodRainWarning" });
     }
-    if (h === "Strong wind" && isHighOrVeryHigh(hz.risk_level) && isNumeric(data.nationalForecast.wind_speed_kmh) && wspd < 36) {
+    if (h === "Strong wind" && isHighOrVeryHigh(hz.risk_level) && isNumeric(data.nationalForecast.wind_speed_kmh) && wspd < 10) {
       result.warnings.push({ key: "windSpeedHazardWarning" });
     }
   });

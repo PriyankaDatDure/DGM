@@ -44,7 +44,7 @@ export default function WeatherFieldInputs({ values, onChange }: Props) {
         </select>
       </div>
       <div className="field">
-        <label>Wind speed (km/h) *</label>
+        <label>Wind speed (m/s) *</label>
         <input type="number" value={values.wind_speed_kmh} onChange={(e) => set("wind_speed_kmh", e.target.value)} required />
       </div>
       <div className="field">

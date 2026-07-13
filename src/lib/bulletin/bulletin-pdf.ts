@@ -262,7 +262,7 @@ function weatherSection(doc: PdfDoc, title: string, w: WeatherEntry) {
   fieldRow(doc, "Humidity (%)", w.relative_humidity_pct);
   fieldRow(doc, "Pressure (hPa)", w.pressure_hpa);
   fieldRow(doc, "Wind direction", w.wind_direction);
-  fieldRow(doc, "Wind speed (km/h)", w.wind_speed_kmh);
+  fieldRow(doc, "Wind speed (m/s)", w.wind_speed_kmh);
   fieldRow(doc, "Rainfall (mm)", w.rainfall_mm);
   fieldRow(doc, "Sunshine (%)", w.sunshine_pct);
   fieldRow(doc, "Confidence", w.confidence);
