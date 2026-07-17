@@ -1143,7 +1143,7 @@ export default function SingleScreenForm({
                                   />
                                   <EnhanceIconButton
                                     onClick={() =>
-                                      enhanceHazardComment(isNat, scope, h, entry.comment)
+                                      enhanceHazardComment(scope, h, entry.comment)
                                     }
                                     disabled={enhancingKey !== null}
                                     title={
