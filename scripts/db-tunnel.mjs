@@ -13,7 +13,15 @@ function loadEnvLocal() {
     if (!trimmed || trimmed.startsWith("#")) continue;
     const eq = trimmed.indexOf("=");
     if (eq === -1) continue;
-    process.env[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
   }
 }
 
@@ -48,6 +56,16 @@ if (process.env.SSH_KEY_PATH) {
   }
 } else if (process.env.SSH_PASSWORD) {
   connectConfig.password = process.env.SSH_PASSWORD;
+  connectConfig.tryKeyboard = true;
+  connectConfig.onKeyboardInteractive = (
+    _name,
+    _instructions,
+    _lang,
+    prompts,
+    finish
+  ) => {
+    finish(prompts.map(() => process.env.SSH_PASSWORD));
+  };
 } else {
   throw new Error("Set SSH_PASSWORD or SSH_KEY_PATH in .env.local");
 }

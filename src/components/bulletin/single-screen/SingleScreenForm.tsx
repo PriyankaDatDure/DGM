@@ -8,6 +8,7 @@ import MultiSelectDropdown from "@/components/bulletin/single-screen/MultiSelect
 import {
   cardCls,
   cellCls,
+  EnhanceIconButton,
   FieldCell,
   FormField,
   inputCls,
@@ -20,6 +21,7 @@ import {
 import {
   BulletinData,
   Hazard,
+  Interpretation,
   RegionCode,
   ValidationResult,
   WeatherEntry,
@@ -160,6 +162,9 @@ export default function SingleScreenForm({
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [prefectureOpen, setPrefectureOpen] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [enhancingKey, setEnhancingKey] = useState<string | null>(null);
+  const [summaryOriginalText, setSummaryOriginalText] = useState<string | null>(null);
+  const [summaryEnhancedText, setSummaryEnhancedText] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(
     loadError ? { msg: loadError, error: true } : null
@@ -238,6 +243,13 @@ export default function SingleScreenForm({
     () => parseDataSources(bulletin.metadata.data_sources),
     [bulletin.metadata.data_sources]
   );
+  const isShowingOriginalSummary =
+    summaryOriginalText !== null &&
+    bulletin.metadata.national_forecast_text === summaryOriginalText;
+  const canToggleSummaryText =
+    summaryOriginalText !== null &&
+    summaryEnhancedText !== null &&
+    summaryOriginalText !== summaryEnhancedText;
 
   useEffect(() => {
     if (isEditing) return;
@@ -293,6 +305,15 @@ export default function SingleScreenForm({
     });
   }, [bulletin.metadata.forecast_date]);
 
+  useEffect(() => {
+    if (!toast || toast.error) return;
+    const message = toast.msg;
+    const timer = setTimeout(() => {
+      setToast((current) => (current?.msg === message ? null : current));
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
   const setMeta = (key: keyof BulletinData["metadata"], value: string) => {
     touchField(`meta:${key}`);
     setBulletin((b) => {
@@ -302,6 +323,113 @@ export default function SingleScreenForm({
         metadata: key === "forecast_date" ? syncValidityFromForecast(metadata) : metadata,
       };
     });
+  };
+
+  const enhanceText = async (
+    key: string,
+    text: string,
+    options: {
+      emptyMsg: string;
+      successMsg: string;
+      onSuccess: (enhanced: string, original: string) => void;
+    }
+  ) => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      setToast({ msg: options.emptyMsg, error: true });
+      return;
+    }
+
+    setEnhancingKey(key);
+    setToast(null);
+    try {
+      const response = await fetch("/api/enhance-forecast-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: trimmed }),
+      });
+      const payload = (await response.json().catch(() => null)) as {
+        enhancedText?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !payload?.enhancedText) {
+        throw new Error(payload?.error ?? t("s1.enhanceError"));
+      }
+
+      options.onSuccess(payload.enhancedText, trimmed);
+      setToast({ msg: options.successMsg });
+    } catch (error) {
+      setToast({
+        msg: error instanceof Error ? error.message : t("s1.enhanceError"),
+        error: true,
+      });
+    } finally {
+      setEnhancingKey(null);
+    }
+  };
+
+  const enhanceNationalSummary = async () => {
+    touchField("meta:national_forecast_text");
+    await enhanceText("meta:national_forecast_text", bulletin.metadata.national_forecast_text, {
+      emptyMsg: t("s1.enhanceEmpty"),
+      successMsg: t("s1.enhanceSuccess"),
+      onSuccess: (enhanced, original) => {
+        setSummaryOriginalText(original);
+        setSummaryEnhancedText(enhanced);
+        setMeta("national_forecast_text", enhanced);
+      },
+    });
+  };
+
+  const enhanceGeneralComment = async () => {
+    await enhanceText("meta:general_comment", bulletin.metadata.general_comment, {
+      emptyMsg: t("s1.enhanceCommentEmpty"),
+      successMsg: t("s1.enhanceCommentSuccess"),
+      onSuccess: (enhanced) => setMeta("general_comment", enhanced),
+    });
+  };
+
+  const enhanceHazardComment = async (
+    scope: "National" | RegionCode,
+    hazard: Hazard,
+    current: string
+  ) => {
+    const key =
+      scope === "National"
+        ? `nathazard:${hazard}:comment`
+        : `regionhazard:${scope}:${hazard}:comment`;
+    await enhanceText(key, current, {
+      emptyMsg: t("s1.enhanceCommentEmpty"),
+      successMsg: t("s1.enhanceCommentSuccess"),
+      onSuccess: (enhanced) => {
+        if (scope === "National") setNationalHazard(hazard, "comment", enhanced);
+        else setRegionHazard(scope, hazard, "comment", enhanced);
+      },
+    });
+  };
+
+  const enhanceInterpretationField = async (field: keyof Interpretation) => {
+    const key = `interp:${field}`;
+    await enhanceText(key, bulletin.interpretation[field], {
+      emptyMsg: t("s1.enhanceTextEmpty"),
+      successMsg: t("s1.enhanceTextSuccess"),
+      onSuccess: (enhanced) => {
+        if (field === "general_situation") touchField(key);
+        setBulletin((b) => ({
+          ...b,
+          interpretation: { ...b.interpretation, [field]: enhanced },
+        }));
+      },
+    });
+  };
+
+  const toggleOriginalSummary = () => {
+    if (!summaryOriginalText || !summaryEnhancedText) return;
+    setMeta(
+      "national_forecast_text",
+      isShowingOriginalSummary ? summaryEnhancedText : summaryOriginalText
+    );
   };
 
   const setWeatherField = (scope: "National" | RegionCode, key: keyof WeatherEntry, value: string) => {
@@ -566,23 +694,69 @@ export default function SingleScreenForm({
                 placeholder={t("s1.dataSourcesPlaceholder")}
               />
             </FormField>
-            <FormField label={t("s1.nationalSummary")} required errorMsg={fieldError("meta:national_forecast_text")}>
-              <textarea
-                rows={3}
-                value={bulletin.metadata.national_forecast_text}
-                onChange={(e) => setMeta("national_forecast_text", e.target.value)}
-                className={`${inputCls} ${highlight("meta:national_forecast_text")}`}
-              />
-            </FormField>
+            <div className="block">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-[#1f2d3a]">
+                  {t("s1.nationalSummary")}
+                  <span className="text-red-600">*</span>
+                </div>
+                {canToggleSummaryText && (
+                  <button
+                    type="button"
+                    onClick={toggleOriginalSummary}
+                    className="whitespace-nowrap rounded border border-black/15 bg-white px-3 py-1 text-xs font-semibold text-[#4b5563] transition hover:bg-black/5"
+                  >
+                    {isShowingOriginalSummary ? t("s1.showEnhanced") : t("s1.showOriginal")}
+                  </button>
+                )}
+              </div>
+              <div className="enhance-input-wrap">
+                <textarea
+                  rows={3}
+                  value={bulletin.metadata.national_forecast_text}
+                  onChange={(e) => {
+                    setSummaryOriginalText(null);
+                    setSummaryEnhancedText(null);
+                    setMeta("national_forecast_text", e.target.value);
+                  }}
+                  className={`${inputCls} ${highlight("meta:national_forecast_text")}`}
+                />
+                <EnhanceIconButton
+                  onClick={enhanceNationalSummary}
+                  disabled={enhancingKey !== null}
+                  title={enhancingKey === "meta:national_forecast_text" ? t("s1.enhancing") : t("s1.enhance")}
+                />
+              </div>
+              {fieldError("meta:national_forecast_text") && (
+                <div className="mt-1 text-[11px] text-red-700">
+                  {fieldError("meta:national_forecast_text")}
+                </div>
+              )}
+              {!fieldError("meta:national_forecast_text") &&
+                fieldWarn("meta:national_forecast_text") && (
+                  <div className="mt-1 text-[11px] text-amber-700">
+                    {fieldWarn("meta:national_forecast_text")}
+                  </div>
+                )}
+            </div>
           </div>
           <div className="mt-4">
             <FormField label={t("s1.comments")} optional>
-              <textarea
-                rows={2}
-                value={bulletin.metadata.general_comment}
-                onChange={(e) => setMeta("general_comment", e.target.value)}
-                className={inputCls}
-              />
+              <div className="enhance-input-wrap">
+                <textarea
+                  rows={2}
+                  value={bulletin.metadata.general_comment}
+                  onChange={(e) => setMeta("general_comment", e.target.value)}
+                  className={inputCls}
+                />
+                <EnhanceIconButton
+                  onClick={enhanceGeneralComment}
+                  disabled={enhancingKey !== null}
+                  title={
+                    enhancingKey === "meta:general_comment" ? t("s1.enhancing") : t("s1.enhance")
+                  }
+                />
+              </div>
             </FormField>
           </div>
         </section>
@@ -952,18 +1126,33 @@ export default function SingleScreenForm({
                                 errorMsg={fieldError(`${keyPrefix}:comment`)}
                                 warnMsg={fieldWarn(`${keyPrefix}:comment`)}
                               >
-                                <input
-                                  value={entry.comment}
-                                  onChange={(e) =>
-                                    isNat
-                                      ? setNationalHazard(h, "comment", e.target.value)
-                                      : setRegionHazard(scope, h, "comment", e.target.value)
-                                  }
-                                  placeholder={
-                                    commentRequired ? t("s3.commentRequired") : t("s3.commentOptional")
-                                  }
-                                  className={`${inputCls} ${highlight(`${keyPrefix}:comment`)}`}
-                                />
+                                <div className="enhance-input-wrap">
+                                  <input
+                                    value={entry.comment}
+                                    onChange={(e) =>
+                                      isNat
+                                        ? setNationalHazard(h, "comment", e.target.value)
+                                        : setRegionHazard(scope, h, "comment", e.target.value)
+                                    }
+                                    placeholder={
+                                      commentRequired
+                                        ? t("s3.commentRequired")
+                                        : t("s3.commentOptional")
+                                    }
+                                    className={`${inputCls} ${highlight(`${keyPrefix}:comment`)}`}
+                                  />
+                                  <EnhanceIconButton
+                                    onClick={() =>
+                                      enhanceHazardComment(isNat, scope, h, entry.comment)
+                                    }
+                                    disabled={enhancingKey !== null}
+                                    title={
+                                      enhancingKey === `${keyPrefix}:comment`
+                                        ? t("s1.enhancing")
+                                        : t("s1.enhance")
+                                    }
+                                  />
+                                </div>
                               </FieldCell>
                             </div>
                           );
@@ -985,18 +1174,27 @@ export default function SingleScreenForm({
           <SectionHeader title={t("s4.title")} subtitle={t("s4.subtitle")} />
           <div className="space-y-4">
             <FormField label={t("s4.generalSituation")} required errorMsg={fieldError("interp:general_situation")} warnMsg={fieldWarn("interp:general_situation")}>
-              <textarea
-                rows={5}
-                value={bulletin.interpretation.general_situation}
-                onChange={(e) => {
-                  touchField("interp:general_situation");
-                  setBulletin((b) => ({
-                    ...b,
-                    interpretation: { ...b.interpretation, general_situation: e.target.value },
-                  }));
-                }}
-                className={`${inputCls} ${highlight("interp:general_situation")}`}
-              />
+              <div className="enhance-input-wrap">
+                <textarea
+                  rows={5}
+                  value={bulletin.interpretation.general_situation}
+                  onChange={(e) => {
+                    touchField("interp:general_situation");
+                    setBulletin((b) => ({
+                      ...b,
+                      interpretation: { ...b.interpretation, general_situation: e.target.value },
+                    }));
+                  }}
+                  className={`${inputCls} ${highlight("interp:general_situation")}`}
+                />
+                <EnhanceIconButton
+                  onClick={() => enhanceInterpretationField("general_situation")}
+                  disabled={enhancingKey !== null}
+                  title={
+                    enhancingKey === "interp:general_situation" ? t("s1.enhancing") : t("s1.enhance")
+                  }
+                />
+              </div>
               <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[11px]">
                 <span className="text-[#8a95a0]">{t("s4.interpTip")}</span>
                 <span
@@ -1022,17 +1220,24 @@ export default function SingleScreenForm({
               ] as const
             ).map(([key, label]) => (
               <FormField key={key} label={label} optional>
-                <textarea
-                  rows={2}
-                  value={bulletin.interpretation[key]}
-                  onChange={(e) =>
-                    setBulletin((b) => ({
-                      ...b,
-                      interpretation: { ...b.interpretation, [key]: e.target.value },
-                    }))
-                  }
-                  className={inputCls}
-                />
+                <div className="enhance-input-wrap">
+                  <textarea
+                    rows={2}
+                    value={bulletin.interpretation[key]}
+                    onChange={(e) =>
+                      setBulletin((b) => ({
+                        ...b,
+                        interpretation: { ...b.interpretation, [key]: e.target.value },
+                      }))
+                    }
+                    className={inputCls}
+                  />
+                  <EnhanceIconButton
+                    onClick={() => enhanceInterpretationField(key)}
+                    disabled={enhancingKey !== null}
+                    title={enhancingKey === `interp:${key}` ? t("s1.enhancing") : t("s1.enhance")}
+                  />
+                </div>
               </FormField>
             ))}
           </div>

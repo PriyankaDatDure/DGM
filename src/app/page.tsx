@@ -13,7 +13,12 @@ export default async function HomePage({
   const params = await searchParams;
   const editBulletinId = params.edit?.trim() || undefined;
 
-  const fullNameFromDb = user ? await getUserFullName(user.userId) : null;
+  let fullNameFromDb: string | null = null;
+  try {
+    fullNameFromDb = user ? await getUserFullName(user.userId) : null;
+  } catch (error) {
+    console.error("Failed to load user full name from DB:", error);
+  }
   const fullName =
     fullNameFromDb ||
     user?.fullName?.trim() ||

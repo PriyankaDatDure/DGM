@@ -65,6 +65,51 @@ export function SectionHeader({
   );
 }
 
+export function EnhanceIconButton({
+  onClick,
+  disabled,
+  title,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="enhance-icon-btn"
+      title={title}
+      aria-label={title}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="m14.5 4 1.1 2.9L18.5 8l-2.9 1.1L14.5 12l-1.1-2.9L10.5 8l2.9-1.1L14.5 4Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+        <path
+          d="m8.5 12.5 3 3M4 20l8.5-8.5"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+        <path
+          d="m6 4 .6 1.4L8 6l-1.4.6L6 8l-.6-1.4L4 6l1.4-.6L6 4Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+        />
+      </svg>
+    </button>
+  );
+}
+
 export function FormField({
   label,
   required,

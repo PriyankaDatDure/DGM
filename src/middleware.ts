@@ -14,7 +14,11 @@ function isPublicPath(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/api/auth/login") || pathname.startsWith("/api/auth/logout")) {
+  if (
+    pathname.startsWith("/api/auth/login") ||
+    pathname.startsWith("/api/auth/logout") ||
+    pathname.startsWith("/api/enhance-forecast-summary")
+  ) {
     return NextResponse.next();
   }
 

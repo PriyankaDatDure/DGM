@@ -1003,6 +1003,52 @@ button.btn.logout-btn:hover {
   gap: 1rem;
 }
 
+.enhance-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 4px;
+  border: 1px solid rgba(15, 58, 74, 0.25);
+  background: #fff;
+  color: #0f3a4a;
+  line-height: 1;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.enhance-icon-btn:hover {
+  background: rgba(15, 58, 74, 0.05);
+}
+
+.enhance-icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.enhance-icon-btn svg {
+  display: block;
+}
+
+/* Button sits outside the input at its top-right, without shifting the field */
+.enhance-input-wrap {
+  position: relative;
+  padding-right: 1.875rem;
+}
+
+.enhance-input-wrap > input,
+.enhance-input-wrap > textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.enhance-input-wrap > .enhance-icon-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
 @media (min-width: 1024px) {
   .bulletin-meta-grid-wide {
     grid-template-columns: repeat(2, minmax(0, 1fr));

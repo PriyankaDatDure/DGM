@@ -315,6 +315,17 @@
       "dataSourcesHint": "(select one or more)",
       "dataSourcesPlaceholder": "Select data sources…",
       "nationalSummary": "National forecast summary",
+      "enhance": "Enhance text",
+      "enhancing": "Enhancing…",
+      "enhanceEmpty": "Enter a national forecast summary before enhancing.",
+      "enhanceSuccess": "National forecast summary enhanced.",
+      "enhanceCommentEmpty": "Enter a comment before enhancing.",
+      "enhanceCommentSuccess": "Comment enhanced.",
+      "enhanceTextEmpty": "Enter text before enhancing.",
+      "enhanceTextSuccess": "Text enhanced.",
+      "enhanceError": "Unable to enhance text. Please try again.",
+      "showOriginal": "Original",
+      "showEnhanced": "Enhanced",
       "comments": "Additional comments"
     },
     "s2": {

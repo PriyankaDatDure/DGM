@@ -315,6 +315,17 @@
       "dataSourcesHint": "(sélection multiple)",
       "dataSourcesPlaceholder": "Sélectionner les sources…",
       "nationalSummary": "Prévision nationale",
+      "enhance": "Améliorer le texte",
+      "enhancing": "Amélioration…",
+      "enhanceEmpty": "Saisissez une prévision nationale avant d'améliorer le texte.",
+      "enhanceSuccess": "Prévision nationale améliorée.",
+      "enhanceCommentEmpty": "Saisissez un commentaire avant d'améliorer le texte.",
+      "enhanceCommentSuccess": "Commentaire amélioré.",
+      "enhanceTextEmpty": "Saisissez du texte avant d'améliorer.",
+      "enhanceTextSuccess": "Texte amélioré.",
+      "enhanceError": "Impossible d'améliorer le texte. Veuillez réessayer.",
+      "showOriginal": "Original",
+      "showEnhanced": "Amélioré",
       "comments": "Commentaires complémentaires"
     },
     "s2": {
