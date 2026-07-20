@@ -10,6 +10,7 @@
     "db:tunnel": "node scripts/db-tunnel.mjs"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "@tailwindcss/postcss": "^4.3.2",
     "bcrypt": "^6.0.0",
     "next": "16.2.9",

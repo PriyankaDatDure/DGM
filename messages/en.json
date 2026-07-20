@@ -29,6 +29,20 @@
     "signedInAs": "Signed in as {username}",
     "language": "Language"
   },
+  "reportIssue": {
+    "button": "Report Issue",
+    "title": "Report an issue",
+    "description": "Describe the problem you encountered. Your message will be emailed to the support team.",
+    "messageLabel": "Message",
+    "messagePlaceholder": "What went wrong? Include steps to reproduce if possible…",
+    "submit": "Send report",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "close": "Close",
+    "empty": "Please enter a message before sending.",
+    "success": "Issue report sent. Thank you.",
+    "error": "Unable to send the issue report. Please try again."
+  },
   "auth": {
     "signIn": "Sign in",
     "signingIn": "Signing in…",

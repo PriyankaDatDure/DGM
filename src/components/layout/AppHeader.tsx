@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import LocaleSwitcher from "@/components/layout/LocaleSwitcher";
+import ReportIssueButton from "@/components/layout/ReportIssueButton";
 
 interface AppHeaderProps {
   username: string;
@@ -53,6 +54,7 @@ export default function AppHeader({ username }: AppHeaderProps) {
         <Link href="/dashboard" className="btn admin-link-btn">
           {tNav("dashboard")}
         </Link>
+        <ReportIssueButton />
         <LocaleSwitcher />
         <button
           className="btn logout-btn"

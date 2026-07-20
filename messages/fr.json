@@ -29,6 +29,20 @@
     "signedInAs": "Connecté en tant que {username}",
     "language": "Langue"
   },
+  "reportIssue": {
+    "button": "Signaler un problème",
+    "title": "Signaler un problème",
+    "description": "Décrivez le problème rencontré. Votre message sera envoyé par e-mail à l'équipe support.",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Que s'est-il passé ? Incluez les étapes pour reproduire si possible…",
+    "submit": "Envoyer",
+    "sending": "Envoi…",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "empty": "Veuillez saisir un message avant d'envoyer.",
+    "success": "Signalement envoyé. Merci.",
+    "error": "Impossible d'envoyer le signalement. Veuillez réessayer."
+  },
   "auth": {
     "signIn": "Se connecter",
     "signingIn": "Connexion…",
